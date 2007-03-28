@@ -1,0 +1,28 @@
+<?php
+// $Id$
+
+
+function demo_install() {
+  global $base_url;
+  
+  $values = array(
+    'name' => 'demo',
+    'op' => 'Add role',
+  );
+  drupal_execute('user_admin_role', $values);
+  
+  $role = array_keys(user_roles(), 'demo');
+  $domain = str_replace(array('http://', '/'), '', $base_url);
+  $usernames = array('demo1', 'demo2', 'demo3');
+  
+  foreach ($usernames as $name) {
+    $values = array(
+      'name' => $name,
+      'pass' => $name,
+      'mail' => $name .'@'. $domain,
+      'roles' => $role,
+    );
+    drupal_execute('user_register', $values);
+  }
+}
+

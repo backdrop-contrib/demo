@@ -1,0 +1,199 @@
+<?php
+// $Id$
+
+
+/**
+ * Implementation of hook_help().
+ */
+function demo_help($section) {
+  switch ($section) {
+    case 'admin/settings/demo':
+      return;
+  }
+}
+
+/**
+ * Implementation of hook_perm().
+ */
+function demo_perm() {
+  return array('administer demo settings');
+}
+
+/**
+ * Implementation of hook_menu().
+ */
+function demo_menu($may_cache) {
+  $items = array();
+  
+  if ($may_cache) {
+    $items[] = array(
+      'path' => 'admin/settings/demo',
+      'title' => t('Demonstration site'),
+      'description' => t('Administer reset interval, create new dumps and manually reset this site.'),
+      'callback' => 'drupal_get_form',
+      'callback arguments' => array('demo_admin_settings'),
+      'access' => user_access('administer demo settings'),
+    );
+    $items[] = array(
+      'path' => 'admin/settings/demo/maintenance',
+      'title' => 'Status',
+      'type' => MENU_DEFAULT_LOCAL_TASK,
+      'weight' => 0,
+    );
+    $items[] = array(
+      'path' => 'admin/settings/demo/dump',
+      'title' => t('Create snapshot'),
+      'callback' => 'drupal_get_form',
+      'callback arguments' => array('demo_dump'),
+      'access' => user_access('administer demo settings'),
+      'type' => MENU_LOCAL_TASK,
+      'weight' => 1,
+    );
+    $items[] = array(
+      'path' => 'admin/settings/demo/reset',
+      'title' => t('Reset site'),
+      'callback' => 'drupal_get_form',
+      'callback arguments' => array('demo_reset_confirm'),
+      'access' => user_access('administer demo settings'),
+      'type' => MENU_LOCAL_TASK,
+      'weight' => 2,
+    );
+  }
+  
+  return $items;
+}
+
+function demo_admin_settings() {
+  global $base_url;
+  
+  $form['status'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Status'),
+    '#collapsible' => false,
+  );
+  $form['status'][] = array(
+    '#value' => t('<p>Last Reset: !date</p>', array('!date' => format_date(variable_get('demo_reset_last', t('Never'))))),
+  );
+  if ($mtime = filemtime(variable_get('demo_dump_path', file_directory_path()) .'/demo_site.sql')) {
+    $last_dump_date = format_date($mtime);
+  }
+  else {
+    $last_dump_date = t('Never');
+  }
+  $form['status'][] = array(
+    '#value' => t('<p>Last Dump: !date</p>', array('!date' => $last_dump_date)),
+  );
+  
+  $form['dump'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Dump settings'),
+    '#collapsible' => true,
+    '#collapsed' => (variable_get('demo_reset_interval', 0) ? false : true),
+  );
+  $period = drupal_map_assoc(array(0, 1800, 3600, 7200, 10800, 14400, 18000, 21600, 32400, 43200, 86400, 172800, 259200, 604800, 1209600, 2419200, 4838400, 9676800), 'format_interval');
+  $period[0] = t('disabled');
+  $form['dump']['interval'] = array(
+    '#type' => 'select',
+    '#title' => t('Automatically reset site every'),
+    '#default_value' => variable_get('demo_reset_interval', 0),
+    '#options' => $period,
+    '#description' => t('Select how often this Demo site shall be automatically resetted. <strong>Note:</strong> This requires cron to run at least within this interval.'),
+  );
+  $form['dump']['path'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Dump path'),
+    '#default_value' => variable_get('demo_dump_path', file_directory_path()),
+    '#size' => 30,
+    '#description' => t('Enter a writable subdirectory below %files where dump files of this Demo site shall be stored.', array('%files' => file_directory_path() .'/')),
+  );
+  $form[] = array(
+    '#type' => 'submit',
+    '#value' => t('Save'),
+  );
+  
+  return $form;
+}
+
+function demo_admin_settings_submit($form_id, $values) {
+  if (!file_check_directory($values['path'], FILE_CREATE_DIRECTORY)) {
+    drupal_set_message(t('Dump could not be created. The directory %directory has not been properly configured.', array('%directory' => $values['path'])), 'error');
+  }
+  else {
+    variable_set('demo_dump_path', $values['path']);
+  }
+  variable_set('demo_reset_interval', $values['interval']);
+}
+
+function demo_dump() {
+  $form = array();
+  return confirm_form($form, t('Are you sure you want to overwrite the site dump?'), 'admin/settings/demo', t('Creating a new dump will overwrite the previous dump of this Drupal installation. This action cannot be undone.'), t('Create'), t('Cancel'));
+}
+
+function demo_dump_submit() {
+  module_invoke('dba', 'auto_backup',
+    variable_get('demo_dump_path', file_directory_path()),
+    'demo_site.sql',
+    array(),
+    false,
+    false
+  );
+  
+  drupal_goto('admin/settings/demo');
+}
+
+function demo_reset_confirm() {
+  $form = array();
+  return confirm_form($form, t('Are you sure you want to reset the site?'), 'admin/settings/demo', t('<div style="color: red; font-weight: bold; font-size: 18px;">Resetting the site will overwrite all changes that have been made to this Drupal installation since the snapshot.<br /><br /><center>THIS ACTION CANNOT BE UNDONE!</center><br /></div>'), t('Reset'), t('Cancel'));
+}
+
+function demo_reset_confirm_submit() {
+  demo_reset();
+  drupal_goto('admin/settings/demo');
+}
+
+function demo_reset() {
+  $dumpfile = variable_get('demo_dump_path', file_directory_path()) .'/demo_site.sql';
+  if (file_exists($dumpfile)) {
+    if ($fp = fopen($dumpfile, 'r')) {
+      $query = NULL;
+      $count = 0;
+      while (!feof($fp)) {
+        $line = fgets($fp, 8192);
+        if ($line && strncmp($line, '--', 2) && strncmp($line, '#', 1)) {
+          $query .= $line;
+          if (strpos($line, ';')) {
+            if (db_query($query, FALSE)) {
+              ++$count;
+            }
+            else {
+              drupal_set_message(t('Query failed: %query', array('%query' => $query)), 'error');
+            }
+            $query = NULL;
+          }
+        }
+      }
+      fclose($fp);
+      drupal_set_message(t('Succesfully ran !query from dump file %filename.', array('!query' => format_plural($count, '1 query', '@count queries'), '%filename' => $dumpfile)));
+    }
+    else {
+      drupal_set_message(t('Unable to open dump file %filename.', array('%filename' => $dumpfile)), 'error');
+    }
+  }
+  else {
+    drupal_set_message(t('Dump file %filename does not exist.', array('%filename' => $dumpfile)), 'error');
+  }
+}
+
+/**
+ * Implementation of hook_cron().
+ */
+function demo_cron() {
+  if ($interval = variable_get('demo_reset_interval', 0)) {
+    // See if it's time for another reset
+    if ((time() - $interval) >= variable_get('demo_reset_last', 0)) {
+      variable_set('demo_reset_last', time());
+      demo_reset();
+    }
+  }
+}
+
