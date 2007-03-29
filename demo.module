@@ -148,6 +148,7 @@ function demo_reset_confirm() {
 
 function demo_reset_confirm_submit() {
   demo_reset();
+  variable_set('demo_reset_last', time());
   drupal_goto('admin/settings/demo');
 }
 
@@ -191,8 +192,8 @@ function demo_cron() {
   if ($interval = variable_get('demo_reset_interval', 0)) {
     // See if it's time for another reset
     if ((time() - $interval) >= variable_get('demo_reset_last', 0)) {
-      variable_set('demo_reset_last', time());
       demo_reset();
+      variable_set('demo_reset_last', time());
     }
   }
 }
