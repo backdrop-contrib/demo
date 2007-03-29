@@ -71,10 +71,16 @@ function demo_admin_settings() {
     '#title' => t('Status'),
     '#collapsible' => false,
   );
+  if (variable_get('demo_reset_last', 0)) {
+    $reset_date = format_date(variable_get('demo_reset_last', 0));
+  }
+  else {
+    $reset_date = t('Never');
+  }
   $form['status'][] = array(
-    '#value' => t('<p>Last Reset: !date</p>', array('!date' => format_date(variable_get('demo_reset_last', t('Never'))))),
+    '#value' => t('<p>Last Reset: !date</p>', array('!date' => $reset_date)),
   );
-  if ($mtime = filemtime(variable_get('demo_dump_path', file_directory_path()) .'/demo_site.sql')) {
+  if (file_exists(variable_get('demo_dump_path', file_directory_path()) .'/demo_site.sql') && $mtime = filemtime(variable_get('demo_dump_path', file_directory_path()) .'/demo_site.sql')) {
     $last_dump_date = format_date($mtime);
   }
   else {
@@ -97,14 +103,14 @@ function demo_admin_settings() {
     '#title' => t('Automatically reset site every'),
     '#default_value' => variable_get('demo_reset_interval', 0),
     '#options' => $period,
-    '#description' => t('Select how often this Demo site shall be automatically resetted. <strong>Note:</strong> This requires cron to run at least within this interval.'),
+    '#description' => t('Select how often this Demo site is automatically resetted. <strong>Note:</strong> This requires cron to run at least within this interval.'),
   );
   $form['dump']['path'] = array(
     '#type' => 'textfield',
     '#title' => t('Dump path'),
     '#default_value' => variable_get('demo_dump_path', file_directory_path()),
     '#size' => 30,
-    '#description' => t('Enter a writable subdirectory below %files where dump files of this Demo site shall be stored.', array('%files' => file_directory_path() .'/')),
+    '#description' => t('Enter a writable subdirectory below %files where dump files of this Demo site are stored.', array('%files' => file_directory_path() .'/')),
   );
   $form[] = array(
     '#type' => 'submit',
