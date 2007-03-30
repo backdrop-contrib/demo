@@ -159,10 +159,21 @@ function demo_reset_confirm_submit() {
   drupal_goto('admin/settings/demo');
 }
 
-function demo_reset() {
-  $dumpfile = variable_get('demo_dump_path', file_directory_path()) .'/demo/demo_site.sql';
+function demo_reset($verbose = true) {
+  // Load any database information in front of reset.
+  $dumpfile = variable_get('demo_dump_path', file_directory_path() .'/demo') .'/demo_site.sql';
+
   if (file_exists($dumpfile)) {
     if ($fp = fopen($dumpfile, 'r')) {
+      // Fetch list of all tables of this installation (dba deals with prefixes).
+      $tables = module_invoke('dba', 'get_tables');
+      
+      // Drop those tables.
+      foreach ($tables as $table) {
+        module_invoke('dba', 'drop_table', $table, false);
+      }
+      
+      // Load data from snapshot
       $query = NULL;
       $count = 0;
       while (!feof($fp)) {
@@ -181,14 +192,20 @@ function demo_reset() {
         }
       }
       fclose($fp);
-      drupal_set_message(t('Succesfully ran !query from dump file %filename.', array('!query' => format_plural($count, '1 query', '@count queries'), '%filename' => $dumpfile)));
+      if ($verbose) {
+        drupal_set_message(t('Succesfully ran !query from dump file %filename.', array('!query' => format_plural($count, '1 query', '@count queries'), '%filename' => $dumpfile)));
+      }
     }
     else {
-      drupal_set_message(t('Unable to open dump file %filename.', array('%filename' => $dumpfile)), 'error');
+      if ($verbose) {
+        drupal_set_message(t('Unable to open dump file %filename.', array('%filename' => $dumpfile)), 'error');
+      }
     }
   }
   else {
-    drupal_set_message(t('Dump file %filename does not exist.', array('%filename' => $dumpfile)), 'error');
+    if ($verbose) {
+      drupal_set_message(t('Dump file %filename does not exist.', array('%filename' => $dumpfile)), 'error');
+    }
   }
 }
 
@@ -199,7 +216,7 @@ function demo_cron() {
   if ($interval = variable_get('demo_reset_interval', 0)) {
     // See if it's time for another reset
     if ((time() - $interval) >= variable_get('demo_reset_last', 0)) {
-      demo_reset();
+      demo_reset(false);
       variable_set('demo_reset_last', time());
     }
   }
