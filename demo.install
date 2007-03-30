@@ -5,12 +5,14 @@
 function demo_install() {
   global $base_url;
   
+  // Create role 'demo'.
   $values = array(
     'name' => 'demo',
     'op' => 'Add role',
   );
   drupal_execute('user_admin_role', $values);
   
+  // Create some demonstration users.
   $role = array_keys(user_roles(), 'demo');
   $domain = str_replace(array('http://', '/'), '', $base_url);
   $usernames = array('demo1', 'demo2', 'demo3');
@@ -23,6 +25,12 @@ function demo_install() {
       'roles' => $role,
     );
     drupal_execute('user_register', $values);
+  }
+  
+  // Enable distributed authentication for Drupal.org users.
+  if (!variable_get('drupal_authentication_service', 0)) {
+    variable_set('drupal_authentication_service', 1);
+    variable_set('drupal_default_da_server', 'drupal.org');
   }
 }
 
