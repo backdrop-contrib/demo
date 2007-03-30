@@ -80,7 +80,8 @@ function demo_admin_settings() {
   $form['status'][] = array(
     '#value' => t('<p>Last Reset: !date</p>', array('!date' => $reset_date)),
   );
-  if (file_exists(variable_get('demo_dump_path', file_directory_path()) .'/demo_site.sql') && $mtime = filemtime(variable_get('demo_dump_path', file_directory_path()) .'/demo_site.sql')) {
+  $dump_file = variable_get('demo_dump_path', file_directory_path() .'/demo') .'/demo_site.sql';
+  if (file_exists($dump_file) && $mtime = filemtime($dump_file)) {
     $last_dump_date = format_date($mtime);
   }
   else {
@@ -103,14 +104,14 @@ function demo_admin_settings() {
     '#title' => t('Automatically reset site every'),
     '#default_value' => variable_get('demo_reset_interval', 0),
     '#options' => $period,
-    '#description' => t('Select how often this Demo site is automatically resetted. <strong>Note:</strong> This requires cron to run at least within this interval.'),
+    '#description' => t('Select how often this demonstration site is automatically resetted. <strong>Note:</strong> This requires cron to run at least within this interval.'),
   );
   $form['dump']['path'] = array(
     '#type' => 'textfield',
     '#title' => t('Dump path'),
-    '#default_value' => variable_get('demo_dump_path', file_directory_path()),
+    '#default_value' => variable_get('demo_dump_path', file_directory_path() .'/demo'),
     '#size' => 30,
-    '#description' => t('Enter a writable subdirectory below %files where dump files of this Demo site are stored.', array('%files' => file_directory_path() .'/')),
+    '#description' => t('Enter a writable subdirectory relative to the root directory of Drupal, where dump files of this demonstration site are stored, f.e. %files.', array('%files' => file_directory_path() .'/demo')),
   );
   $form[] = array(
     '#type' => 'submit',
@@ -137,7 +138,7 @@ function demo_dump() {
 
 function demo_dump_submit() {
   module_invoke('dba', 'auto_backup',
-    variable_get('demo_dump_path', file_directory_path()),
+    variable_get('demo_dump_path', file_directory_path() .'/demo'),
     'demo_site.sql',
     array(),
     false,
@@ -159,7 +160,7 @@ function demo_reset_confirm_submit() {
 }
 
 function demo_reset() {
-  $dumpfile = variable_get('demo_dump_path', file_directory_path()) .'/demo_site.sql';
+  $dumpfile = variable_get('demo_dump_path', file_directory_path()) .'/demo/demo_site.sql';
   if (file_exists($dumpfile)) {
     if ($fp = fopen($dumpfile, 'r')) {
       $query = NULL;
