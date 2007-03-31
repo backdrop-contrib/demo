@@ -80,7 +80,8 @@ function demo_admin_settings() {
   $form['status'][] = array(
     '#value' => t('<p>Last Reset: !date</p>', array('!date' => $reset_date)),
   );
-  $dump_file = variable_get('demo_dump_path', file_directory_path() .'/demo') .'/demo_site.sql';
+  $site = str_replace('sites', '', conf_path());
+  $dump_file = variable_get('demo_dump_path', file_directory_path() .'/demo') . $site .'/demo_site.sql';
   if (file_exists($dump_file) && $mtime = filemtime($dump_file)) {
     $last_dump_date = format_date($mtime);
   }
@@ -137,8 +138,9 @@ function demo_dump() {
 }
 
 function demo_dump_submit() {
+  $site = str_replace('sites', '', conf_path());
   module_invoke('dba', 'auto_backup',
-    variable_get('demo_dump_path', file_directory_path() .'/demo'),
+    variable_get('demo_dump_path', file_directory_path() .'/demo') . $site,
     'demo_site.sql',
     array(),
     false,
@@ -161,7 +163,8 @@ function demo_reset_confirm_submit() {
 
 function demo_reset($verbose = true) {
   // Load any database information in front of reset.
-  $dumpfile = variable_get('demo_dump_path', file_directory_path() .'/demo') .'/demo_site.sql';
+  $site = str_replace('sites', '', conf_path());
+  $dumpfile = variable_get('demo_dump_path', file_directory_path() .'/demo') . $site .'/demo_site.sql';
 
   if (file_exists($dumpfile)) {
     if ($fp = fopen($dumpfile, 'r')) {
