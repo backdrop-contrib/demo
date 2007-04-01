@@ -41,13 +41,22 @@ function demo_menu($may_cache) {
       'weight' => 0,
     );
     $items[] = array(
+      'path' => 'admin/settings/demo/manage',
+      'title' => t('Manage snapshots'),
+      'callback' => 'drupal_get_form',
+      'callback arguments' => array('demo_manage'),
+      'access' => user_access('administer demo settings'),
+      'type' => MENU_LOCAL_TASK,
+      'weight' => 1,
+    );
+    $items[] = array(
       'path' => 'admin/settings/demo/dump',
       'title' => t('Create snapshot'),
       'callback' => 'drupal_get_form',
       'callback arguments' => array('demo_dump'),
       'access' => user_access('administer demo settings'),
       'type' => MENU_LOCAL_TASK,
-      'weight' => 1,
+      'weight' => 2,
     );
     $items[] = array(
       'path' => 'admin/settings/demo/reset',
@@ -56,7 +65,7 @@ function demo_menu($may_cache) {
       'callback arguments' => array('demo_reset_confirm'),
       'access' => user_access('administer demo settings'),
       'type' => MENU_LOCAL_TASK,
-      'weight' => 2,
+      'weight' => 3,
     );
   }
   
@@ -78,19 +87,13 @@ function demo_admin_settings() {
     $reset_date = t('Never');
   }
   $form['status'][] = array(
-    '#value' => t('<p>Last Reset: !date</p>', array('!date' => $reset_date)),
+    '#value' => t('<p><strong>Last reset:</strong> !date</p>', array('!date' => $reset_date)),
   );
-  $site = str_replace('sites', '', conf_path());
-  $dump_file = variable_get('demo_dump_path', file_directory_path() .'/demo') . $site .'/demo_site.sql';
-  if (file_exists($dump_file) && $mtime = filemtime($dump_file)) {
-    $last_dump_date = format_date($mtime);
-  }
-  else {
-    $last_dump_date = t('Never');
-  }
   $form['status'][] = array(
-    '#value' => t('<p>Last Dump: !date</p>', array('!date' => $last_dump_date)),
+    '#value' => t('<p><strong>Default snapshot:</strong> !snapshot</p>', array('!snapshot' => variable_get('demo_dump_cron', t('None')))),
   );
+  
+  $fileconfig = demo_get_fileconfig();
   
   $form['dump'] = array(
     '#type' => 'fieldset',
@@ -105,14 +108,15 @@ function demo_admin_settings() {
     '#title' => t('Automatically reset site every'),
     '#default_value' => variable_get('demo_reset_interval', 0),
     '#options' => $period,
-    '#description' => t('Select how often this demonstration site is automatically resetted. <strong>Note:</strong> This requires cron to run at least within this interval.'),
+    '#description' => t('Select how often this demonstration site is automatically resetted. Ensure that you have chosen a snapshot for cron runs in <a href="!manage">Manage snapshots</a> first. <strong>Note:</strong> This requires cron to run at least within this interval.', array('!manage' => url('admin/settings/demo/manage'))),
   );
+  
   $form['dump']['path'] = array(
     '#type' => 'textfield',
     '#title' => t('Dump path'),
-    '#default_value' => variable_get('demo_dump_path', file_directory_path() .'/demo'),
+    '#default_value' => $fileconfig['path'],
     '#size' => 30,
-    '#description' => t('Enter a writable subdirectory relative to the root directory of Drupal, where dump files of this demonstration site are stored, f.e. %files.', array('%files' => file_directory_path() .'/demo')),
+    '#description' => t('Enter a writable directory, where dump files of this demonstration site are stored, f.e. %files. The name of this site (e.g. %confpath) is automatically appended to this directory.<br /><br /><strong>Note: For security reasons you should store site dumps outside of the document root of your webspace!</strong>', array('%files' => file_directory_path() .'/demo', '%confpath' => $fileconfig['site'])),
   );
   $form[] = array(
     '#type' => 'submit',
@@ -132,42 +136,106 @@ function demo_admin_settings_submit($form_id, $values) {
   variable_set('demo_reset_interval', $values['interval']);
 }
 
+function demo_manage() {
+  $form['dump'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Available snapshots'),
+  );
+  $form = array_merge_recursive($form, demo_get_dumps());
+  $form[] = array(
+    '#type' => 'submit',
+    '#value' => t('Set as default snapshot for cron'),
+  );
+  $form[] = array(
+    '#type' => 'submit',
+    '#value' => t('Delete selected snapshot'),
+  );
+  
+  return $form;
+}
+
+function demo_manage_submit($form_id, $values) {
+  switch ($values['op']) {
+    case t('Set as default snapshot for cron'):
+      variable_set('demo_dump_cron', $values['filename']);
+      drupal_set_message(t('Snapshot %title will be used for upcoming cron runs.', array('%title' => $values['filename'])));
+      break;
+    
+    case t('Delete selected snapshot'):
+    default:
+      $files = demo_get_fileconfig($values['filename']);
+      unlink($files['sqlfile']);
+      unlink($files['infofile']);
+      drupal_set_message(t('Snapshot %title has been deleted.', array('%title' => $values['filename'])));
+      break;
+  }
+}
+
 function demo_dump() {
   $form = array();
+  $form['dump']['filename'] = array(
+    '#title' => t('File name'),
+    '#type' => 'textfield',
+    '#required' => true,
+    '#maxlength' => 30,
+    '#description' => t('Enter the dump file name without file extension. The name must be out of alphanumeric latin characters, i.e. characters out of a-z, 0-9, dashes ("-"), underscores ("_") and dots.'),
+  );
+  $form['dump']['description'] = array(
+    '#title' => t('Description'),
+    '#type' => 'textarea',
+    '#rows' => 2,
+    '#description' => t('Optionally enter a description for this snapshot here.'),
+  );
   return confirm_form($form, t('Are you sure you want to overwrite the site dump?'), 'admin/settings/demo', t('Creating a new dump will overwrite the previous dump of this Drupal installation. This action cannot be undone.'), t('Create'), t('Cancel'));
 }
 
-function demo_dump_submit() {
-  $site = str_replace('sites', '', conf_path());
+function demo_dump_submit($form_id, $values) {
+  // Write .info file
+  $info = demo_set_info($values);
+  if (!$info) {
+    return false;
+  }
+  
+  // Perform dump
+  $fileconfig = demo_get_fileconfig($info['filename']);
   module_invoke('dba', 'auto_backup',
-    variable_get('demo_dump_path', file_directory_path() .'/demo') . $site,
-    'demo_site.sql',
+    $fileconfig['path'] . $fileconfig['site'],
+    $fileconfig['sql'],
     array(),
+    false,
     false,
     false
   );
   
-  drupal_goto('admin/settings/demo');
+  drupal_goto('admin/settings/demo/manage');
 }
 
 function demo_reset_confirm() {
-  $form = array();
-  return confirm_form($form, t('Are you sure you want to reset the site?'), 'admin/settings/demo', t('<div style="color: red; font-weight: bold; font-size: 18px;">Resetting the site will overwrite all changes that have been made to this Drupal installation since the snapshot.<br /><br /><center>THIS ACTION CANNOT BE UNDONE!</center><br /></div>'), t('Reset'), t('Cancel'));
+  $form['dump'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Available snapshots'),
+  );
+  $form = array_merge_recursive($form, demo_get_dumps());
+  
+  return confirm_form($form, t('Are you sure you want to reset the site?'), 'admin/settings/demo', t('<div style="color: red; font-weight: bold; font-size: 18px;">Resetting the site will overwrite all changes that have been made to this Drupal installation since the chosen snapshot.<br /><br /><center>THIS ACTION CANNOT BE UNDONE!</center><br /></div>'), t('Reset'), t('Cancel'));
 }
 
-function demo_reset_confirm_submit() {
-  demo_reset();
+function demo_reset_confirm_submit($form_id, $values) {
+  // Reset site to chosen snapshot
+  demo_reset($values['filename']);
+  // Save time of last reset
   variable_set('demo_reset_last', time());
+  
   drupal_goto('admin/settings/demo');
 }
 
-function demo_reset($verbose = true) {
+function demo_reset($filename = 'demo_site', $verbose = true) {
   // Load any database information in front of reset.
-  $site = str_replace('sites', '', conf_path());
-  $dumpfile = variable_get('demo_dump_path', file_directory_path() .'/demo') . $site .'/demo_site.sql';
+  $demo_dump_cron = variable_get('demo_dump_cron', $filename);
+  $fileconfig = demo_get_fileconfig($filename);
 
-  if (file_exists($dumpfile)) {
-    if ($fp = fopen($dumpfile, 'r')) {
+  if (file_exists($fileconfig['sqlfile'])) {
+    if ($fp = fopen($fileconfig['sqlfile'], 'r')) {
       // Fetch list of all tables of this installation (dba deals with prefixes).
       $tables = module_invoke('dba', 'get_tables');
       
@@ -188,27 +256,148 @@ function demo_reset($verbose = true) {
               ++$count;
             }
             else {
-              drupal_set_message(t('Query failed: %query', array('%query' => $query)), 'error');
+              if ($verbose) {
+                drupal_set_message(t('Query failed: %query', array('%query' => $query)), 'error');
+              }
             }
             $query = NULL;
           }
         }
       }
       fclose($fp);
+      
+      // Reset default dump to load on cron.
+      variable_set('demo_dump_cron', $demo_dump_cron);
+      
       if ($verbose) {
-        drupal_set_message(t('Succesfully ran !query from dump file %filename.', array('!query' => format_plural($count, '1 query', '@count queries'), '%filename' => $dumpfile)));
+        drupal_set_message(t('Succesfully ran !query from dump file %filename.', array('!query' => format_plural($count, '1 query', '@count queries'), '%filename' => $fileconfig['sqlfile'])));
       }
     }
     else {
       if ($verbose) {
-        drupal_set_message(t('Unable to open dump file %filename.', array('%filename' => $dumpfile)), 'error');
+        drupal_set_message(t('Unable to open dump file %filename.', array('%filename' => $fileconfig['sqlfile'])), 'error');
       }
     }
   }
   else {
     if ($verbose) {
-      drupal_set_message(t('Dump file %filename does not exist.', array('%filename' => $dumpfile)), 'error');
+      drupal_set_message(t('Dump file %filename does not exist.', array('%filename' => $fileconfig['sqlfile'])), 'error');
     }
+  }
+}
+
+function demo_get_fileconfig($filename = 'demo_site') {
+  $fileconfig = array();
+  
+  // Build dump path.
+  $fileconfig['path'] = variable_get('demo_dump_path', file_directory_path() .'/demo');
+  $fileconfig['site'] = str_replace('sites', '', conf_path());
+  $fileconfig['dumppath'] = $fileconfig['path'] . $fileconfig['site'];
+  
+  // Check if directory exists.
+  if (!file_check_directory($fileconfig['dumppath'], FILE_CREATE_DIRECTORY, 'path')) {
+    return false;
+  }
+  
+  // Build SQL filename.
+  $fileconfig['sql'] = $filename .'.sql';
+  $fileconfig['sqlfile'] = $fileconfig['path'] . $fileconfig['site'] .'/'. $filename .'.sql';
+  
+  // Build info filename.
+  $fileconfig['info'] = $filename .'.info';
+  $fileconfig['infofile'] = $fileconfig['path'] . $fileconfig['site'] .'/'. $filename .'.info';
+  
+  return $fileconfig;
+}
+
+function demo_get_dumps() {
+  $fileconfig = demo_get_fileconfig();
+  
+  // Fetch list of available info files
+  $files = file_scan_directory($fileconfig['dumppath'], '.info$');
+  
+  $options = array();
+  // Forms API does not pass selected value of individual radio buttons,
+  // so we manually insert a internal form value here.
+  $options['dump']['filename'] = array(
+    '#type' => 'value',
+    '#required' => true,
+    '#title' => t('Snapshot'),
+  );
+  foreach ($files as $filename => $file) {
+    // Build basic file info
+    $files[$filename] = (array)$files[$filename];
+    $info = demo_get_info($filename);
+    
+    // Convert file info for Forms API
+    $option = array();
+    $option['#type'] = 'radio';
+    $option['#name'] = 'filename';
+    $option['#mtime'] = filemtime($filename);
+    $option['#title'] = $info['filename'] .' ('. format_date(filemtime($filename)) .')';
+    $option['#return_value'] = $info['filename'];
+    if ($info['filename'] == variable_get('demo_dump_cron', 'demo_site')) {
+      $option['#value'] = $info['filename'];
+    }
+    $option['#description'] = '';
+    if (!empty($info['description'])) {
+      $option['#description'] .= $info['description'] .'<br /><br />';
+    }
+    if (count($info['modules']) > 1) {
+      $option['#description'] .= t('Modules: ') . implode(', ', $info['modules']);
+    }
+    $option['#attributes'] = array('onclick' => "$('.description', this.parentNode.parentNode).slideToggle();");
+    
+    $options['dump'][] = $option;
+  }
+  
+  // Order options by date (descending filemtime)
+  
+  // Attach stylesheet to initially hide descriptions
+  drupal_add_js("$('div.form-item div.description', $('form')).hide();", 'inline', 'footer');
+  
+  return $options;
+}
+
+function demo_get_info($filename) {
+  $info = array();
+
+  if (file_exists($filename)) {
+    $info = parse_ini_file($filename);
+
+    if (isset($info['modules'])) {
+      $info['modules'] = explode(" ", $info['modules']);
+    }
+    else {
+      $info['modules'] = null;
+    }
+  }
+  return $info;
+}
+
+function demo_set_info($values = null) {
+  if (isset($values['filename']) && is_array($values)) {
+    // Check for valid filename
+    if (!preg_match('/^[-_\.a-zA-Z0-9]+$/', $values['filename'])) {
+      drupal_set_message(t('Dump filename %title must contain alphanumeric characters, dots, dashes and underscores only. Other characters, including blanks (spaces), are not allowed.', array('%title' => $values['filename'])), 'error');
+      return false;
+    }
+    
+    // Parse values
+    $infos = array();
+    $infos['filename'] = $values['filename'];
+    $infos['description'] = '"'. $values['description'] .'"';
+    $infos['modules'] = implode(' ', module_list());
+    
+    // Write information to .info file
+    $fileconfig = demo_get_fileconfig($values['filename']);
+    $infofile = fopen($fileconfig['infofile'], 'w');
+    foreach ($infos as $key => $info) {
+      fwrite($infofile, $key .' = '. $info ."\n");
+    }
+    fclose($infofile);
+    
+    return $infos;
   }
 }
 
@@ -219,7 +408,7 @@ function demo_cron() {
   if ($interval = variable_get('demo_reset_interval', 0)) {
     // See if it's time for another reset
     if ((time() - $interval) >= variable_get('demo_reset_last', 0)) {
-      demo_reset(false);
+      demo_reset(variable_get('demo_dump_cron', 'demo_site'), false);
       variable_set('demo_reset_last', time());
     }
   }
