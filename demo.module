@@ -72,6 +72,26 @@ function demo_menu($may_cache) {
   return $items;
 }
 
+function demo_block($op = 'list', $delta = 0, $edit = array()) {
+  switch ($op) {
+    case 'list':
+      $blocks[0] = array(
+        'info' => t('Demo site reset'),
+        'weight' => 0,
+        'enabled' => 1,
+        'region' => 'right',
+      ); 
+      return $blocks;
+    
+    case 'view':
+      $block = array(
+        'subject' => t('Reset demo'),
+        'content' => drupal_get_form('demo_reset_now'),
+      );
+      return $block;
+  }
+}
+
 function demo_admin_settings() {
   global $base_url;
   
@@ -226,7 +246,32 @@ function demo_reset_confirm_submit($form_id, $values) {
   // Save time of last reset
   variable_set('demo_reset_last', time());
   
+  if (isset($values['redirect'])) {
+    drupal_goto($values['redirect']);
+  }
   drupal_goto('admin/settings/demo');
+}
+
+function demo_reset_now() {
+  $form = array();
+  $form['#base'] = 'demo_reset_confirm';
+  $form['redirect'] = array(
+    '#type' => 'value',
+    '#value' => $_GET['q'],
+  );
+  $form['filename'] = array(
+    '#type' => 'value',
+    '#value' => variable_get('demo_dump_cron', 'demo_site'),
+  );
+  $form['snapshot'] = array(
+    '#value' => t('Active snapshot: !snapshot', array('!snapshot' => variable_get('demo_dump_cron', 'demo_site'))),
+  );
+  $form['reset-demo'] = array(
+    '#type' => 'submit',
+    '#value' => t('Reset now'),
+  );
+  
+  return $form;
 }
 
 function demo_reset($filename = 'demo_site', $verbose = true) {
@@ -252,7 +297,7 @@ function demo_reset($filename = 'demo_site', $verbose = true) {
         if ($line && strncmp($line, '--', 2) && strncmp($line, '#', 1)) {
           $query .= $line;
           if (strpos($line, ';')) {
-            if (db_query($query, FALSE)) {
+            if (_db_query($query, FALSE)) {
               ++$count;
             }
             else {
