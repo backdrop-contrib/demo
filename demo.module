@@ -36,7 +36,7 @@ function demo_menu($may_cache) {
     );
     $items[] = array(
       'path' => 'admin/settings/demo/maintenance',
-      'title' => 'Status',
+      'title' => t('Status'),
       'type' => MENU_DEFAULT_LOCAL_TASK,
       'weight' => 0,
     );
@@ -80,7 +80,7 @@ function demo_block($op = 'list', $delta = 0, $edit = array()) {
         'weight' => 0,
         'enabled' => 1,
         'region' => 'right',
-      ); 
+      );
       return $blocks;
     
     case 'view':
@@ -363,7 +363,7 @@ function demo_get_dumps() {
   
   $options = array();
   // Forms API does not pass selected value of individual radio buttons,
-  // so we manually insert a internal form value here.
+  // so we manually insert an internal form value here.
   $options['dump']['filename'] = array(
     '#type' => 'value',
     '#required' => true,
@@ -389,6 +389,10 @@ function demo_get_dumps() {
       $option['#description'] .= $info['description'] .'<br /><br />';
     }
     if (count($info['modules']) > 1) {
+      // Remove required core modules from list.
+      $info['modules'] = array_diff($info['modules'], array('block', 'filter', 'node', 'system', 'user', 'watchdog'));
+      // Sort module list alphabetically.
+      sort($info['modules']);
       $option['#description'] .= t('Modules: ') . implode(', ', $info['modules']);
     }
     $option['#attributes'] = array('onclick' => "$('.description', this.parentNode.parentNode).slideToggle();");
