@@ -136,7 +136,7 @@ function demo_admin_settings() {
     '#title' => t('Dump path'),
     '#default_value' => $fileconfig['path'],
     '#size' => 30,
-    '#description' => t('Enter a writable directory, where dump files of this demonstration site are stored, f.e. %files. The name of this site (e.g. %confpath) is automatically appended to this directory.<br /><br /><strong>Note: For security reasons you should store site dumps outside of the document root of your webspace!</strong>', array('%files' => file_directory_path() .'/demo', '%confpath' => $fileconfig['site'])),
+    '#description' => t('Enter a writable directory where dump files of this demonstration site are stored, f.e. %files. The name of this site (e.g. %confpath) is automatically appended to this directory.<br /><br /><strong>Note: For security reasons you should store site dumps outside of the document root of your webspace!</strong>', array('%files' => file_directory_path() .'/demo', '%confpath' => $fileconfig['site'])),
   );
   $form[] = array(
     '#type' => 'submit',
@@ -198,7 +198,7 @@ function demo_dump() {
     '#type' => 'textfield',
     '#required' => true,
     '#maxlength' => 30,
-    '#description' => t('Enter the dump file name without file extension. The name must be out of alphanumeric latin characters, i.e. characters out of a-z, 0-9, dashes ("-"), underscores ("_") and dots.'),
+    '#description' => t('Enter the snapshot filename without file extension. The name must be out of alphanumeric latin characters, i.e. characters out of a-z, 0-9, dashes ("-"), underscores ("_") and dots.'),
   );
   $form['dump']['description'] = array(
     '#title' => t('Description'),
@@ -206,7 +206,7 @@ function demo_dump() {
     '#rows' => 2,
     '#description' => t('Optionally enter a description for this snapshot here.'),
   );
-  return confirm_form($form, t('Are you sure you want to overwrite the site dump?'), 'admin/settings/demo', t('Creating a new dump will overwrite the previous dump of this Drupal installation. This action cannot be undone.'), t('Create'), t('Cancel'));
+  return confirm_form($form, t('Are you sure you want to create a new snapshot?'), 'admin/settings/demo', t('If the above filename already exists, creating a new snapshot will overwrite the existing snapshot. This action cannot be undone.'), t('Create'), t('Cancel'));
 }
 
 function demo_dump_submit($form_id, $values) {
@@ -237,7 +237,7 @@ function demo_reset_confirm() {
   );
   $form = array_merge_recursive($form, demo_get_dumps());
   
-  return confirm_form($form, t('Are you sure you want to reset the site?'), 'admin/settings/demo', t('<div style="color: red; font-weight: bold; font-size: 18px;">Resetting the site will overwrite all changes that have been made to this Drupal installation since the chosen snapshot.<br /><br /><center>THIS ACTION CANNOT BE UNDONE!</center><br /></div>'), t('Reset'), t('Cancel'));
+  return confirm_form($form, t('Are you sure you want to reset the site?'), 'admin/settings/demo', t('Resetting the site will overwrite all changes that have been made to this Drupal installation since the chosen snapshot.<br /><br /><div style="color: red; font-weight: bold; font-size: 18px;"><center>THIS ACTION CANNOT BE UNDONE!</center><br /></div>'), t('Reset'), t('Cancel'));
 }
 
 function demo_reset_confirm_submit($form_id, $values) {
@@ -389,8 +389,8 @@ function demo_get_dumps() {
       $option['#description'] .= $info['description'] .'<br /><br />';
     }
     if (count($info['modules']) > 1) {
-      // Remove required core modules from list.
-      $info['modules'] = array_diff($info['modules'], array('block', 'filter', 'node', 'system', 'user', 'watchdog'));
+      // Remove required core modules and obvious modules from module list.
+      $info['modules'] = array_diff($info['modules'], array('block', 'filter', 'node', 'system', 'user', 'watchdog', 'demo', 'dba'));
       // Sort module list alphabetically.
       sort($info['modules']);
       $option['#description'] .= t('Modules: ') . implode(', ', $info['modules']);
@@ -400,7 +400,7 @@ function demo_get_dumps() {
     $options['dump'][] = $option;
   }
   
-  // Order options by date (descending filemtime)
+  // @todo Order options by date (descending filemtime)
   
   // Attach stylesheet to initially hide descriptions
   drupal_add_js("$('div.form-item div.description', $('form')).hide();", 'inline', 'footer');
