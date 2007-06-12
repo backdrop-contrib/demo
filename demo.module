@@ -204,7 +204,7 @@ function demo_dump() {
     '#title' => t('Description'),
     '#type' => 'textarea',
     '#rows' => 2,
-    '#description' => t('Optionally enter a description for this snapshot here.'),
+    '#description' => t('Optionally enter a description for this snapshot here. If no description is given and a snapshot with the same filename already exists, the previous description is used.'),
   );
   return confirm_form($form, t('Are you sure you want to create a new snapshot?'), 'admin/settings/demo', t('If the above filename already exists, creating a new snapshot will overwrite the existing snapshot. This action cannot be undone.'), t('Create'), t('Cancel'));
 }
@@ -430,6 +430,21 @@ function demo_set_info($values = null) {
     if (!preg_match('/^[-_\.a-zA-Z0-9]+$/', $values['filename'])) {
       drupal_set_message(t('Dump filename %title must contain alphanumeric characters, dots, dashes and underscores only. Other characters, including blanks (spaces), are not allowed.', array('%title' => $values['filename'])), 'error');
       return false;
+    }
+
+    if (!empty($values['description'])) {
+      // parse_ini_file() doesn't allow certain characters in description
+      $s = array("\r\n", "\r", "\n", '"');
+      $r = array(' ', ' ', ' ', "'");
+      $values['description'] = str_replace($s, $r, $values['description']);
+    }
+    else {
+      // If new description is empty, try to use previous description.
+      $old_file = demo_get_fileconfig($values['filename']);
+      $old_infos = demo_get_info($old_file['infofile']);
+      if (!empty($old_infos['description'])) {
+        $values['description'] = $old_infos['description'];
+      }
     }
     
     // Parse values
