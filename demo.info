@@ -3,5 +3,4 @@ name = Demo Site
 description = "Resets the site for demonstration purposes."
 dependencies = dba drupal
 package = Development
-version = "$Name$"
 
