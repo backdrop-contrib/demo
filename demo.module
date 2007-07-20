@@ -26,13 +26,14 @@ function demo_menu($may_cache) {
   $items = array();
   
   if ($may_cache) {
+    $admin_access = user_access('administer demo settings');
     $items[] = array(
       'path' => 'admin/settings/demo',
       'title' => t('Demonstration site'),
       'description' => t('Administer reset interval, create new dumps and manually reset this site.'),
       'callback' => 'drupal_get_form',
       'callback arguments' => array('demo_admin_settings'),
-      'access' => user_access('administer demo settings'),
+      'access' => $admin_access,
     );
     $items[] = array(
       'path' => 'admin/settings/demo/maintenance',
@@ -45,7 +46,7 @@ function demo_menu($may_cache) {
       'title' => t('Manage snapshots'),
       'callback' => 'drupal_get_form',
       'callback arguments' => array('demo_manage'),
-      'access' => user_access('administer demo settings'),
+      'access' => $admin_access,
       'type' => MENU_LOCAL_TASK,
       'weight' => 1,
     );
@@ -54,7 +55,7 @@ function demo_menu($may_cache) {
       'title' => t('Create snapshot'),
       'callback' => 'drupal_get_form',
       'callback arguments' => array('demo_dump'),
-      'access' => user_access('administer demo settings'),
+      'access' => $admin_access,
       'type' => MENU_LOCAL_TASK,
       'weight' => 2,
     );
@@ -63,9 +64,16 @@ function demo_menu($may_cache) {
       'title' => t('Reset site'),
       'callback' => 'drupal_get_form',
       'callback arguments' => array('demo_reset_confirm'),
-      'access' => user_access('administer demo settings'),
+      'access' => $admin_access,
       'type' => MENU_LOCAL_TASK,
       'weight' => 3,
+    );
+    $items[] = array(
+      'path' => 'demo/autocomplete',
+      'title' => t('Demo Site autocomplete'),
+      'callback' => 'demo_autocomplete',
+      'access' => $admin_access,
+      'type' => MENU_CALLBACK,
     );
   }
   
@@ -196,9 +204,10 @@ function demo_dump() {
   $form['dump']['filename'] = array(
     '#title' => t('File name'),
     '#type' => 'textfield',
+    '#autocomplete_path' => 'demo/autocomplete',
     '#required' => true,
     '#maxlength' => 30,
-    '#description' => t('Enter the snapshot filename without file extension. The name must be out of alphanumeric latin characters, i.e. characters out of a-z, 0-9, dashes ("-"), underscores ("_") and dots.'),
+    '#description' => t('Enter the snapshot file name without file extension. Allowed characters are a-z, 0-9, dashes ("-"), underscores ("_") and dots.'),
   );
   $form['dump']['description'] = array(
     '#title' => t('Description'),
@@ -478,3 +487,19 @@ function demo_cron() {
   }
 }
 
+/**
+ * Retrieve a pipe delimited string of autocomplete suggestions for existing
+ * snapshot names.
+ */
+function demo_autocomplete($string = '') {
+  $matches = array();
+  if ($string && $fileconfig = demo_get_fileconfig()) {
+    $string = preg_quote($string);
+    $files = file_scan_directory($fileconfig['dumppath'], $string .'.*\.info$');
+    foreach ($files as $file) {
+      $matches[$file->name] = check_plain($file->name);
+   }
+  }
+  print drupal_to_js($matches);
+  exit();
+}
