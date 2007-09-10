@@ -1,6 +1,6 @@
 ; $Id$
-name = Demo Site
-description = "Resets the site for demonstration purposes."
+name = "Demo Site"
+description = "Create snapshots and reset the site for demonstration or testing purposes."
 dependencies = dba
 package = Development
 

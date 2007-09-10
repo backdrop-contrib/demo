@@ -1,6 +1,13 @@
 <?php
 // $Id$
 
+/**
+ * @file
+ * Demonstration Site
+ * by Daniel Kudwien (dfk) <dfk@unleashedmind.com>
+ * and Stefan Kudwien (smk) <smk@unleashedmind.com>
+ * developed by UNLEASHED MIND - www.unleashedmind.com
+ */
 
 /**
  * Implementation of hook_help().
