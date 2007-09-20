@@ -364,10 +364,21 @@ function demo_get_fileconfig($filename = 'demo_site') {
   $fileconfig['dumppath'] = $fileconfig['path'] . $fileconfig['site'];
   
   // Check if directory exists.
+  file_check_directory($fileconfig['path'], FILE_CREATE_DIRECTORY, 'path');
   if (!file_check_directory($fileconfig['dumppath'], FILE_CREATE_DIRECTORY, 'path')) {
     return false;
   }
   
+  // Protect dump files.
+  $htaccess = $fileconfig['path'] ."/.htaccess";
+  if (!is_file($htaccess)) {
+    $htaccess_lines = "# demo.module snapshots\n# Do not let the webserver serve anything under here!\n#\nDeny from all\n";
+    if (($fp = fopen($htaccess, 'w')) && fputs($fp, $htaccess_lines)) {
+      fclose($fp);
+      chmod($htaccess, 0664);
+    }
+  }
+    
   // Build SQL filename.
   $fileconfig['sql'] = $filename .'.sql';
   $fileconfig['sqlfile'] = $fileconfig['path'] . $fileconfig['site'] .'/'. $filename .'.sql';
@@ -384,6 +395,12 @@ function demo_get_dumps() {
   
   // Fetch list of available info files
   $files = file_scan_directory($fileconfig['dumppath'], '.info$');
+
+  // Sort snapshots by date (ascending file modification time)
+  foreach ($files as $file => $object) {
+    $files[$file]->filemtime = filemtime($file);
+  }
+  uasort($files, create_function('$a, $b', 'return ($a->filemtime < $b->filemtime);'));
   
   $options = array();
   // Forms API does not pass selected value of individual radio buttons,
@@ -402,8 +419,7 @@ function demo_get_dumps() {
     $option = array();
     $option['#type'] = 'radio';
     $option['#name'] = 'filename';
-    $option['#mtime'] = filemtime($filename);
-    $option['#title'] = $info['filename'] .' ('. format_date(filemtime($filename)) .')';
+    $option['#title'] = $info['filename'] .' ('. format_date($file->filemtime, 'small') .')';
     $option['#return_value'] = $info['filename'];
     if ($info['filename'] == variable_get('demo_dump_cron', 'demo_site')) {
       $option['#value'] = $info['filename'];
@@ -423,8 +439,6 @@ function demo_get_dumps() {
     
     $options['dump'][] = $option;
   }
-  
-  // @todo Order options by date (descending filemtime)
   
   // Attach stylesheet to initially hide descriptions
   drupal_add_js("$('div.form-item div.description', $('form')).hide();", 'inline', 'footer');
