@@ -226,22 +226,29 @@ function demo_dump() {
 }
 
 function demo_dump_submit($form_id, $values) {
+  global $db_type;
+
   // Write .info file
   $info = demo_set_info($values);
   if (!$info) {
     return false;
   }
   
+  // Include database specific functions
+  switch ($db_type) {
+    case 'mysqli':
+      $engine = 'mysql';
+      break;
+   default:
+      $engine = $db_type;
+      break;
+  }
+  require_once drupal_get_path('module', 'demo') ."/database_{$engine}_dump.inc";
+
   // Perform dump
   $fileconfig = demo_get_fileconfig($info['filename']);
-  module_invoke('dba', 'auto_backup',
-    $fileconfig['path'] . $fileconfig['site'],
-    $fileconfig['sql'],
-    array(),
-    false,
-    false,
-    false
-  );
+  $exclude = array(db_prefix_tables('{watchdog}'));
+  demo_dump_db($fileconfig['sqlfile'], $exclude);
   
   drupal_goto('admin/settings/demo/manage');
 }
@@ -290,60 +297,61 @@ function demo_reset_now() {
   return $form;
 }
 
-function demo_reset($filename = 'demo_site', $verbose = true) {
+function demo_reset($filename = 'demo_site', $verbose = TRUE) {
   // Load any database information in front of reset.
   $demo_dump_cron = variable_get('demo_dump_cron', $filename);
   $fileconfig = demo_get_fileconfig($filename);
 
-  if (file_exists($fileconfig['sqlfile'])) {
-    if ($fp = fopen($fileconfig['sqlfile'], 'r')) {
-      // Fetch list of all tables of this installation (dba deals with prefixes).
-      $tables = module_invoke('dba', 'get_tables');
-      
-      // Drop those tables.
-      foreach ($tables as $table) {
-        module_invoke('dba', 'drop_table', $table, false);
+  if (file_exists($fileconfig['sqlfile']) && $fp = fopen($fileconfig['sqlfile'], 'r')) {
+    // Drop all tables (except watchdog)
+    $dt_watchdog = db_prefix_tables('{watchdog}');
+    foreach (demo_enum_tables() as $table) {
+      if ($table != $dt_watchdog) {
+        db_query("DROP TABLE %s", $table);
       }
-      
-      // Load data from snapshot
-      $query = NULL;
-      $count = 0;
-      while (!feof($fp)) {
-        $line = fgets($fp, 8192);
-        if ($line && strncmp($line, '--', 2) && strncmp($line, '#', 1)) {
-          $query .= $line;
-          if (strpos($line, ';')) {
-            if (_db_query($query, FALSE)) {
-              ++$count;
+    }
+
+    // Load data from snapshot
+    $query = '';
+    $success = TRUE;
+    while (!feof($fp)) {
+      $line = fgets($fp, 16384);
+      if ($line && $line != "\n" && strncmp($line, '--', 2) && strncmp($line, '#', 1)) {
+        $query .= $line;
+        if (substr($line, -2) == ";\n") {
+          if (!_db_query($query, FALSE)) {
+            if ($verbose) {
+              // Don't use t() here, as the locale_* tables might not (yet) exist.
+              drupal_set_message(strtr('Query failed: %query', array('%query' => $query)), 'error');
             }
-            else {
-              if ($verbose) {
-                drupal_set_message(t('Query failed: %query', array('%query' => $query)), 'error');
-              }
-            }
-            $query = NULL;
+            $success = FALSE;
           }
+          $query = '';
         }
       }
-      fclose($fp);
-      
-      // Reset default dump to load on cron.
-      variable_set('demo_dump_cron', $demo_dump_cron);
-      
-      if ($verbose) {
-        drupal_set_message(t('Succesfully ran !query from dump file %filename.', array('!query' => format_plural($count, '1 query', '@count queries'), '%filename' => $fileconfig['sqlfile'])));
-      }
+    }
+    fclose($fp);
+
+    if ($success) {
+      $message = t('Succesfully restored database from %filename.', array('%filename' => $fileconfig['sqlfile']));
     }
     else {
-      if ($verbose) {
-        drupal_set_message(t('Unable to open dump file %filename.', array('%filename' => $fileconfig['sqlfile'])), 'error');
-      }
+      $message = t('Failed restoring database from %filename.', array('%filename' => $fileconfig['sqlfile']));
     }
+    if ($verbose) {
+      drupal_set_message($message);
+    }
+    watchdog('demo', $message, $success ? WATCHDOG_NOTICE : WATCHDOG_ERROR);
+
+    // Reset default dump to load on cron.
+    variable_set('demo_dump_cron', $demo_dump_cron);
   }
   else {
+    $message = t('Unable to open dump file %filename.', array('%filename' => $fileconfig['sqlfile']));
     if ($verbose) {
-      drupal_set_message(t('Dump file %filename does not exist.', array('%filename' => $fileconfig['sqlfile'])), 'error');
+      drupal_set_message($message, 'error');
     }
+    watchdog('demo', $message, WATCHDOG_ERROR);
   }
 }
 
@@ -406,7 +414,7 @@ function demo_get_dumps() {
     }
     if (count($info['modules']) > 1) {
       // Remove required core modules and obvious modules from module list.
-      $info['modules'] = array_diff($info['modules'], array('block', 'filter', 'node', 'system', 'user', 'watchdog', 'demo', 'dba'));
+      $info['modules'] = array_diff($info['modules'], array('block', 'filter', 'node', 'system', 'user', 'watchdog', 'demo'));
       // Sort module list alphabetically.
       sort($info['modules']);
       $option['#description'] .= t('Modules: ') . implode(', ', $info['modules']);
@@ -479,6 +487,61 @@ function demo_set_info($values = null) {
     
     return $infos;
   }
+}
+
+/**
+ * Returns a list of tables in the active database.
+ *
+ * Only returns tables whose prefix matches the configured one (or ones, if
+ * there are multiple).
+ */
+function demo_enum_tables() {
+  global $db_prefix;
+
+  $tables = array();
+
+  if (is_array($db_prefix)) {
+    // Create a regular expression for table prefix matching.
+    $rx = '/^('. implode('|', array_filter($db_prefix)) .')/';
+  }
+  else if ($db_prefix != '') {
+    $rx = '/^'. $db_prefix .'/';
+  }
+
+  switch ($GLOBALS['db_type']) {
+    case 'mysql':
+    case 'mysqli':
+      $result = db_query("SHOW TABLES");
+      break;
+    case 'pgsql':
+      $result = db_query("SELECT table_name FROM information_schema.tables WHERE table_schema = '%s'", 'public');
+      break;
+  }
+
+  while ($table = db_fetch_array($result)) {
+    $table = reset($table);
+    if (is_array($db_prefix)) {
+      // Check if table matches any configured prefix.
+      if (preg_match($rx, $table)) {
+        // One arbitrary prefix matched, now let's find out which one.
+        $plain_table = preg_replace($rx, '', $table);
+        $table_prefix = substr($table, 0, strlen($table) - strlen($plain_table));
+        if ($db_prefix[$plain_table] == $table_prefix) {
+          $tables[] = $table;
+        }
+      }
+    }
+    else if ($db_prefix != '') {
+      if (preg_match($rx, $table)) {
+        $tables[] = $table;
+      }
+    }
+    else {
+      $tables[] = $table;
+    }
+  }
+
+  return $tables;
 }
 
 /**
