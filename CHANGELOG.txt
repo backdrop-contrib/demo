@@ -7,6 +7,9 @@ Demo x.x-x.x, xxxx-xx-xx
 
 Demo 5.x-1.x, xxxx-xx-xx
 ------------------------
+Added translation template and German translation.
+#175498 by smk-ka: Added version number to dumps to distinguish new-style from
+  legacy dumps that included the watchdog table.
 Added sort snapshots by date.
 #163309 by dman: Demo directory is not created on first run config.
 #132753 by smk-ka: Removed dependency on dba module.

@@ -11,7 +11,7 @@ function demo_dump_db($filename, $exclude = array()) {
   }
 
   if ($fp = fopen($filename, 'wb')) {
-    $header  = "-- Demo.module database dump\n";
+    $header  = "-- Demo.module database dump (version ". DEMO_DUMP_VERSION .")\n";
     $header .= "-- http://drupal.org/project/demo\n";
     $header .= "--\n";
     $header .= "-- Database: ". _demo_get_database() ."\n";

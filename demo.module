@@ -9,6 +9,8 @@
  * developed by UNLEASHED MIND - www.unleashedmind.com
  */
 
+define('DEMO_DUMP_VERSION', '1.1');
+
 /**
  * Implementation of hook_help().
  */
@@ -143,7 +145,7 @@ function demo_admin_settings() {
     '#title' => t('Automatically reset site every'),
     '#default_value' => variable_get('demo_reset_interval', 0),
     '#options' => $period,
-    '#description' => t('Select how often this demonstration site is automatically resetted. Ensure that you have chosen a snapshot for cron runs in <a href="!manage">Manage snapshots</a> first. <strong>Note:</strong> This requires cron to run at least within this interval.', array('!manage' => url('admin/settings/demo/manage'))),
+    '#description' => t('Select how often this demonstration site is automatically reset. Ensure that you have chosen a snapshot for cron runs in <a href="!manage">Manage snapshots</a> first. <strong>Note:</strong> This requires cron to run at least within this interval.', array('!manage' => url('admin/settings/demo/manage'))),
   );
   
   $form['dump']['path'] = array(
@@ -301,12 +303,14 @@ function demo_reset($filename = 'demo_site', $verbose = TRUE) {
   // Load any database information in front of reset.
   $demo_dump_cron = variable_get('demo_dump_cron', $filename);
   $fileconfig = demo_get_fileconfig($filename);
+  $version = demo_get_info($filename, 'version');
 
   if (file_exists($fileconfig['sqlfile']) && $fp = fopen($fileconfig['sqlfile'], 'r')) {
-    // Drop all tables (except watchdog)
+    // Drop tables
     $dt_watchdog = db_prefix_tables('{watchdog}');
     foreach (demo_enum_tables() as $table) {
-      if ($table != $dt_watchdog) {
+      // Skip watchdog, except for legacy dumps that included the watchdog table
+      if ($table != $dt_watchdog || version_compare($version, '1.1', '<')) {
         db_query("DROP TABLE %s", $table);
       }
     }
@@ -446,7 +450,7 @@ function demo_get_dumps() {
   return $options;
 }
 
-function demo_get_info($filename) {
+function demo_get_info($filename, $field = NULL) {
   $info = array();
 
   if (file_exists($filename)) {
@@ -458,8 +462,18 @@ function demo_get_info($filename) {
     else {
       $info['modules'] = null;
     }
+
+    if (!isset($info['version'])) {
+      $info['version'] = '1.0';
+    }
   }
-  return $info;
+
+  if (isset($field)) {
+    return isset($info[$field]) ? $info[$field] : NULL;
+  }
+  else {
+    return $info;
+  }
 }
 
 function demo_set_info($values = null) {
@@ -479,18 +493,19 @@ function demo_set_info($values = null) {
     else {
       // If new description is empty, try to use previous description.
       $old_file = demo_get_fileconfig($values['filename']);
-      $old_infos = demo_get_info($old_file['infofile']);
-      if (!empty($old_infos['description'])) {
-        $values['description'] = $old_infos['description'];
+      $old_description = demo_get_info($old_file['infofile'], 'description');
+      if (!empty($old_description)) {
+        $values['description'] = $old_description;
       }
     }
     
-    // Parse values
+    // Set values
     $infos = array();
     $infos['filename'] = $values['filename'];
     $infos['description'] = '"'. $values['description'] .'"';
     $infos['modules'] = implode(' ', module_list());
-    
+    $infos['version'] = DEMO_DUMP_VERSION;
+
     // Write information to .info file
     $fileconfig = demo_get_fileconfig($values['filename']);
     $infofile = fopen($fileconfig['infofile'], 'w');
