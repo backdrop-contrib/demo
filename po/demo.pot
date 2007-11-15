@@ -172,7 +172,7 @@ msgid "Reset now"
 msgstr ""
 
 #: demo.module:340
-msgid "Succesfully restored database from %filename."
+msgid "Successfully restored database from %filename."
 msgstr ""
 
 #: demo.module:343

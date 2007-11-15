@@ -55,7 +55,7 @@ msgstr "Nie"
 
 #: demo.module:127
 msgid "<p><strong>Last reset:</strong> !date</p>"
-msgstr "<p><strong>Zuletzt zureückgesetzt:</strong> !date</p>"
+msgstr "<p><strong>Zuletzt zurückgesetzt:</strong> !date</p>"
 
 #: demo.module:130
 msgid "<p><strong>Default snapshot:</strong> !snapshot</p>"
@@ -134,7 +134,7 @@ msgstr "Beschreibung"
 
 #: demo.module:225
 msgid "Optionally enter a description for this snapshot here. If no description is given and a snapshot with the same filename already exists, the previous description is used."
-msgstr "Optionale Angabe einer Beschreibung des Schnappschusses. Wenn keine Beschreibung angegeben wird und ein Schnappschuss mit dem selben Dateinamen existiert bereits, wird die vorherige Beschreibung übernommen."
+msgstr "Optionale Angabe einer Beschreibung des Schnappschusses. Wenn keine Beschreibung angegeben wird und ein Schnappschuss mit dem selben Dateinamen bereits existiert, wird die vorherige Beschreibung übernommen."
 
 #: demo.module:227
 msgid "Are you sure you want to create a new snapshot?"
@@ -174,7 +174,7 @@ msgid "Reset now"
 msgstr "Jetzt zurücksetzen"
 
 #: demo.module:340
-msgid "Succesfully restored database from %filename."
+msgid "Successfully restored database from %filename."
 msgstr "Datenbank erfolgreich wiederhergestellt aus %filename."
 
 #: demo.module:343

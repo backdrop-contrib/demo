@@ -7,6 +7,18 @@ Demo x.x-x.x, xxxx-xx-xx
 
 Demo 5.x-1.x, xxxx-xx-xx
 ------------------------
+
+
+
+Demo 5.x-1.2, xxxx-xx-xx
+------------------------
+#191179 by sun: Fixed no information displayed after saving settings.
+Fixed the new version check for legacy dumps.
+Fixed wrong revision tagged with 5.x-1.1.
+
+
+Demo 5.x-1.1, 2007-11-11
+------------------------
 Added translation template and German translation.
 #175498 by smk-ka: Added version number to dumps to distinguish new-style from
   legacy dumps that included the watchdog table.
