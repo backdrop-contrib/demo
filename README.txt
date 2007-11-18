@@ -1,6 +1,6 @@
 /* $Id$ */
 
-SUMMARY
+-- SUMMARY --
 
 Demo Site is a simple module that allows you to take a snapshot of a Drupal
 demonstration site. It turns a Drupal installation into a sandbox that you can
@@ -9,13 +9,18 @@ use for testing modules or publicly demonstrating a module / extension / theme
 the dumped state in a definable interval. Of course you can reset the site
 manually, too.
 
+For a full description visit the project page:
+  http://drupal.org/project/demo
+Bug reports, feature suggestions and latest developments:
+  http://drupal.org/project/demo/issues
 
-REQUIREMENTS
+
+-- REQUIREMENTS --
 
 Cron, or alternatively Poormanscron http://drupal.org/project/poormanscron
 
 
-INSTALLATION
+-- INSTALLATION --
 
 * Copy the demo module to your modules directory and enable it on the Modules
   page (admin/build/modules).
@@ -23,16 +28,13 @@ INSTALLATION
 * Optionally configure who is allowed to administer demo module, create dumps
   and reset the site at the Access control page (admin/user/access).
 
+
+-- CONFIGURATION --
+
 * Configure the path where dumps will be stored at the Dump settings
   (admin/settings/demo).
 
-* Go to Create snapshot (admin/settings/demo/dump) and create your first
-  snapshot.
-
-* After a while, reset your site (admin/settings/demo/reset).
-
-
-CONFIGURING AUTOMATIC RESET
+To configure automatic reset:
 
 * Go to Manage snapshots (admin/settings/demo/manage) and select a snapshot
   for cron.
@@ -41,16 +43,23 @@ CONFIGURING AUTOMATIC RESET
   have cron configured to run at least once within the entered time interval.
 
 
-CONTACT
+-- USAGE --
 
-For bug reports, feature suggestions and latest developments visit the project 
-page: http://drupal.org/project/demo.
+* Go to Create snapshot (admin/settings/demo/dump) and create your first
+  snapshot.
 
-Authors:
-Daniel F. Kudwien <dfk@unleashedmind.com>
-Stefan Kudwien <smk@unleashedmind.com>
+* After a while, reset your site (admin/settings/demo/reset).
 
-This module has been developed by UNLEASHED MIND - www.unleashedmind.com
 
-UNLEASHED MIND is specialized on consulting and development of Drupal powered
-websites, and offers services from hosting to customization to get you started.
+-- CONTACT --
+
+Current maintainers:
+* Daniel F. Kudwien (sun) - dev@unleashedmind.com
+* Stefan M. Kudwien (smk-ka) - dev@unleashedmind.com
+
+This project has been sponsored by:
+* UNLEASHED MIND
+  Specialized in consulting and planning of Drupal powered sites, UNLEASHED
+  MIND offers installation, development, theming, customization, and hosting
+  to get you started. Visit http://www.unleashedmind.com for more information.
+
