@@ -15,12 +15,16 @@ function demo_dump_db($filename, $exclude = array()) {
     $header .= "-- http://drupal.org/project/demo\n";
     $header .= "--\n";
     $header .= "-- Database: ". _demo_get_database() ."\n";
-    $header .= "-- Date: ". format_date(time(), 'large') ."\n\n";
+    $header .= "-- Date: ". format_date(time(), 'large') ."\n";
     fwrite($fp, $header);
 
     foreach (demo_enum_tables() as $table) {
+      // Always export structure to allow creating a new site
+      // from a database dump
+      fwrite($fp, _demo_dump_table_structure($table));
+
       if (!in_array($table, $exclude)) {
-        fwrite($fp, _demo_dump_table($table));
+        fwrite($fp, _demo_dump_table_data($table));
       }
     }
 
@@ -41,19 +45,27 @@ function _demo_get_database() {
 }
 
 /**
- * Dump a table.
- *
- * This code has been stolen from the phpMyAdmin project.
- *
- * @todo Support extended inserts (much faster).
+ * Dump table structure.
  */
-function _demo_dump_table($table) {
-  $output = "--\n";
+function _demo_dump_table_structure($table) {
+  $output  = "\n";
+  $output .= "--\n";
   $output .= "-- Table structure for table '$table'\n";
   $output .= "--\n\n";
 
-  $output .= _demo_show_create_table($table) .";\n\n";
+  $data = db_fetch_array(db_query("SHOW CREATE TABLE %s", $table));
+  $output .= preg_replace('/^CREATE TABLE/', 'CREATE TABLE IF NOT EXISTS', $data['Create Table']) .";\n";
 
+  return $output;
+}
+
+/**
+ * Dump table data.
+ *
+ * This code has largely been stolen from the phpMyAdmin project.
+ */
+function _demo_dump_table_data($table) {
+  $output  = "\n";
   $output .= "--\n";
   $output .= "-- Dumping data for table '$table'\n";
   $output .= "--\n\n";
@@ -136,14 +148,6 @@ function _demo_dump_table($table) {
   }
 
   return $output;
-}
-
-/**
- * Return CREATE TABLE definition.
- */
-function _demo_show_create_table($table) {
-  $create = db_fetch_array(db_query("SHOW CREATE TABLE %s", $table));
-  return $create['Create Table'];
 }
 
 /**

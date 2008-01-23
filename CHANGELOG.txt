@@ -7,7 +7,8 @@ Demo x.x-x.x, xxxx-xx-xx
 
 Demo 5.x-1.x, xxxx-xx-xx
 ------------------------
-
+Export excluded tables' structure (using IF NOT EXISTS) to facilitate the
+  creation of a new site from an exsiting demo dump.
 
 
 Demo 5.x-1.2, xxxx-xx-xx
