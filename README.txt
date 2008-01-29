@@ -12,7 +12,7 @@ manually, too.
 For a full description visit the project page:
   http://drupal.org/project/demo
 Bug reports, feature suggestions and latest developments:
-  http://drupal.org/project/demo/issues
+  http://drupal.org/project/issues/demo
 
 
 -- REQUIREMENTS --
