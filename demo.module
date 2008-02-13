@@ -3,9 +3,7 @@
 
 /**
  * @file
- * Demonstration Site
- * by Daniel Kudwien, Stefan Kudwien
- * developed by UNLEASHED MIND - www.unleashedmind.com
+ * Demonstration Site module
  */
 
 define('DEMO_DUMP_VERSION', '1.1');
@@ -13,8 +11,8 @@ define('DEMO_DUMP_VERSION', '1.1');
 /**
  * Implementation of hook_help().
  */
-function demo_help($section) {
-  switch ($section) {
+function demo_help($path, $arg) {
+  switch ($path) {
     case 'admin/settings/demo':
       return;
   }
@@ -30,61 +28,52 @@ function demo_perm() {
 /**
  * Implementation of hook_menu().
  */
-function demo_menu($may_cache) {
+function demo_menu() {
   $items = array();
-  
-  if ($may_cache) {
-    $admin_access = user_access('administer demo settings');
-    $items[] = array(
-      'path' => 'admin/settings/demo',
-      'title' => t('Demonstration site'),
-      'description' => t('Administer reset interval, create new dumps and manually reset this site.'),
-      'callback' => 'drupal_get_form',
-      'callback arguments' => array('demo_admin_settings'),
-      'access' => $admin_access,
-    );
-    $items[] = array(
-      'path' => 'admin/settings/demo/maintenance',
-      'title' => t('Status'),
-      'type' => MENU_DEFAULT_LOCAL_TASK,
-      'weight' => 0,
-    );
-    $items[] = array(
-      'path' => 'admin/settings/demo/manage',
-      'title' => t('Manage snapshots'),
-      'callback' => 'drupal_get_form',
-      'callback arguments' => array('demo_manage'),
-      'access' => $admin_access,
-      'type' => MENU_LOCAL_TASK,
-      'weight' => 1,
-    );
-    $items[] = array(
-      'path' => 'admin/settings/demo/dump',
-      'title' => t('Create snapshot'),
-      'callback' => 'drupal_get_form',
-      'callback arguments' => array('demo_dump'),
-      'access' => $admin_access,
-      'type' => MENU_LOCAL_TASK,
-      'weight' => 2,
-    );
-    $items[] = array(
-      'path' => 'admin/settings/demo/reset',
-      'title' => t('Reset site'),
-      'callback' => 'drupal_get_form',
-      'callback arguments' => array('demo_reset_confirm'),
-      'access' => $admin_access,
-      'type' => MENU_LOCAL_TASK,
-      'weight' => 3,
-    );
-    $items[] = array(
-      'path' => 'demo/autocomplete',
-      'title' => t('Demo Site autocomplete'),
-      'callback' => 'demo_autocomplete',
-      'access' => $admin_access,
-      'type' => MENU_CALLBACK,
-    );
-  }
-  
+  $admin_access = array('administer demo settings');
+
+  $items['admin/settings/demo'] = array(
+    'title' => 'Demonstration site',
+    'description' => 'Administer reset interval, create new dumps and manually reset this site.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('demo_admin_settings'),
+    'access arguments' => $admin_access,
+  );
+  $items['admin/settings/demo/maintenance'] = array(
+    'title' => 'Status',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => 0,
+  );
+  $items['admin/settings/demo/manage'] = array(
+    'title' => 'Manage snapshots',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('demo_manage'),
+    'access arguments' => $admin_access,
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 1,
+  );
+  $items['admin/settings/demo/dump'] = array(
+    'title' => 'Create snapshot',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('demo_dump'),
+    'access arguments' => $admin_access,
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 2,
+  );
+  $items['admin/settings/demo/reset'] = array(
+    'title' => 'Reset site',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('demo_reset_confirm'),
+    'access arguments' => $admin_access,
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 3,
+  );
+  $items['demo/autocomplete'] = array(
+    'title' => 'Demo Site autocomplete',
+    'page callback' => 'demo_autocomplete',
+    'access arguments' => $admin_access,
+    'type' => MENU_CALLBACK,
+  );
   return $items;
 }
 
@@ -162,15 +151,15 @@ function demo_admin_settings() {
   return $form;
 }
 
-function demo_admin_settings_submit($form_id, $values) {
-  if (!file_check_directory($values['path'], FILE_CREATE_DIRECTORY)) {
-    form_set_error('path', t('The snapshot directory %directory could not be created.', array('%directory' => $values['path'])));
+function demo_admin_settings_submit($form, &$form_state) {
+  if (!file_check_directory($form_state['values']['path'], FILE_CREATE_DIRECTORY)) {
+    form_set_error('path', t('The snapshot directory %directory could not be created.', array('%directory' => $form_state['values']['path'])));
     return FALSE;
   }
   else {
-    variable_set('demo_dump_path', $values['path']);
+    variable_set('demo_dump_path', $form_state['values']['path']);
   }
-  variable_set('demo_reset_interval', $values['interval']);
+  variable_set('demo_reset_interval', $form_state['values']['interval']);
   drupal_set_message(t('The configuration options have been saved.'));
 }
 
@@ -187,26 +176,22 @@ function demo_manage() {
   $form[] = array(
     '#type' => 'submit',
     '#value' => t('Delete selected snapshot'),
+    '#submit' => array('demo_manage_delete_submit'),
   );
   
   return $form;
 }
 
-function demo_manage_submit($form_id, $values) {
-  switch ($values['op']) {
-    case t('Set as default snapshot for cron'):
-      variable_set('demo_dump_cron', $values['filename']);
-      drupal_set_message(t('Snapshot %title will be used for upcoming cron runs.', array('%title' => $values['filename'])));
-      break;
-    
-    case t('Delete selected snapshot'):
-    default:
-      $files = demo_get_fileconfig($values['filename']);
-      unlink($files['sqlfile']);
-      unlink($files['infofile']);
-      drupal_set_message(t('Snapshot %title has been deleted.', array('%title' => $values['filename'])));
-      break;
-  }
+function demo_manage_submit($form, &$form_state) {
+  variable_set('demo_dump_cron', $form_state['values']['filename']);
+  drupal_set_message(t('Snapshot %title will be used for upcoming cron runs.', array('%title' => $form_state['values']['filename'])));
+}
+
+function demo_manage_delete_submit($form, &$form_state) {
+  $files = demo_get_fileconfig($form_state['values']['filename']);
+  unlink($files['sqlfile']);
+  unlink($files['infofile']);
+  drupal_set_message(t('Snapshot %title has been deleted.', array('%title' => $form_state['values']['filename'])));
 }
 
 function demo_dump() {
@@ -228,11 +213,11 @@ function demo_dump() {
   return confirm_form($form, t('Are you sure you want to create a new snapshot?'), 'admin/settings/demo', t('If the above filename already exists, creating a new snapshot will overwrite the existing snapshot. This action cannot be undone.'), t('Create'), t('Cancel'));
 }
 
-function demo_dump_submit($form_id, $values) {
+function demo_dump_submit($form, &$form_state) {
   global $db_type;
 
   // Write .info file
-  $info = demo_set_info($values);
+  $info = demo_set_info($form_state['values']);
   if (!$info) {
     return false;
   }
@@ -253,7 +238,7 @@ function demo_dump_submit($form_id, $values) {
   $exclude = array(db_prefix_tables('{watchdog}'));
   demo_dump_db($fileconfig['sqlfile'], $exclude);
   
-  drupal_goto('admin/settings/demo/manage');
+  $form_state['redirect'] = 'admin/settings/demo/manage';
 }
 
 function demo_reset_confirm() {
@@ -266,21 +251,23 @@ function demo_reset_confirm() {
   return confirm_form($form, t('Are you sure you want to reset the site?'), 'admin/settings/demo', t('Resetting the site will overwrite all changes that have been made to this Drupal installation since the chosen snapshot.<br /><br /><div style="color: red; font-weight: bold; font-size: 18px;"><center>THIS ACTION CANNOT BE UNDONE!</center><br /></div>'), t('Reset'), t('Cancel'));
 }
 
-function demo_reset_confirm_submit($form_id, $values) {
+function demo_reset_confirm_submit($form, &$form_state) {
   // Reset site to chosen snapshot
-  demo_reset($values['filename']);
+  demo_reset($form_state['values']['filename']);
   // Save time of last reset
   variable_set('demo_reset_last', time());
   
-  if (isset($values['redirect'])) {
-    drupal_goto($values['redirect']);
+  if (isset($form_state['values']['redirect'])) {
+    $form_state['redirect'] = $form_state['values']['redirect'];
   }
-  drupal_goto('admin/settings/demo');
+  else {
+    $form_state['redirect'] = 'admin/settings/demo';
+  }
 }
 
 function demo_reset_now() {
   $form = array();
-  $form['#base'] = 'demo_reset_confirm';
+  $form['#submit'][] = 'demo_reset_confirm_submit';
   $form['redirect'] = array(
     '#type' => 'value',
     '#value' => $_GET['q'],

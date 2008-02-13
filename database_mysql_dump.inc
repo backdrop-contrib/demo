@@ -73,9 +73,8 @@ function _demo_dump_table_data($table) {
   // Dump table data
   $result = db_query("SELECT * FROM %s", $table);
 
-  if (db_num_rows($result)) {
-    // Get table fields.
-    $fields = _demo_get_fields($result);
+  // Get table fields.
+  if ($fields = _demo_get_fields($result)) {
     $num_fields = count($fields);
 
     // Escape backslashes, PHP code, special chars

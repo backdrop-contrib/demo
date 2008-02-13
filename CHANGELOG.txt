@@ -5,13 +5,18 @@ Demo x.x-x.x, xxxx-xx-xx
 
 
 
+Demo 6.x-1.0, 2008-02-14
+------------------------
+#221386 by sun: Ported Demo Site to Drupal 6.
+
+
 Demo 5.x-1.x, xxxx-xx-xx
 ------------------------
-Export excluded tables' structure (using IF NOT EXISTS) to facilitate the
-  creation of a new site from an exsiting demo dump.
+by smk-ka: Export excluded tables' structure (using IF NOT EXISTS) to facilitate
+  the creation of a new site from an exsiting demo dump.
 
 
-Demo 5.x-1.2, xxxx-xx-xx
+Demo 5.x-1.2, 2007-11-15
 ------------------------
 #191179 by sun: Fixed no information displayed after saving settings.
 Fixed the new version check for legacy dumps.

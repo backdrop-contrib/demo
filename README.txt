@@ -17,7 +17,7 @@ Bug reports, feature suggestions and latest developments:
 
 -- REQUIREMENTS --
 
-Cron, or alternatively Poormanscron http://drupal.org/project/poormanscron
+* Cron, or alternatively Poormanscron (http://drupal.org/project/poormanscron).
 
 
 -- INSTALLATION --
