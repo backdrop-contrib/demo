@@ -520,7 +520,7 @@ function demo_enum_tables() {
 
   if (is_array($db_prefix)) {
     // Create a regular expression for table prefix matching.
-    $rx = '/^('. implode('|', array_filter($db_prefix)) .')/';
+    $rx = '/^'. implode('|', array_filter($db_prefix)) .'/';
   }
   else if ($db_prefix != '') {
     $rx = '/^'. $db_prefix .'/';
@@ -539,12 +539,11 @@ function demo_enum_tables() {
   while ($table = db_fetch_array($result)) {
     $table = reset($table);
     if (is_array($db_prefix)) {
-      // Check if table matches any configured prefix.
-      if (preg_match($rx, $table)) {
-        // One arbitrary prefix matched, now let's find out which one.
-        $plain_table = preg_replace($rx, '', $table);
-        $table_prefix = substr($table, 0, strlen($table) - strlen($plain_table));
-        if ($db_prefix[$plain_table] == $table_prefix) {
+      // Check if table name matches a configured prefix.
+      if (preg_match($rx, $table, $matches)) {
+        $table_prefix = $matches[0];
+        $plain_table = substr($table, strlen($table_prefix));
+        if ($db_prefix[$plain_table] == $table_prefix || $db_prefix['default'] == $table_prefix) {
           $tables[] = $table;
         }
       }

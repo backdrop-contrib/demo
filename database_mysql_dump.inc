@@ -1,6 +1,11 @@
 <?php
 // $Id$
 
+// Some older mysql client libs are missing this constant.
+if (!defined('MYSQLI_BINARY_FLAG')) {
+  define('MYSQLI_BINARY_FLAG', 128);
+}
+
 /**
  * Dump active database.
  */
@@ -15,7 +20,8 @@ function demo_dump_db($filename, $exclude = array()) {
     $header .= "-- http://drupal.org/project/demo\n";
     $header .= "--\n";
     $header .= "-- Database: ". _demo_get_database() ."\n";
-    $header .= "-- Date: ". format_date(time(), 'large') ."\n";
+    $header .= "-- Date: ". format_date(time(), 'large') ."\n\n";
+    $header .= "SET SQL_MODE=\"NO_AUTO_VALUE_ON_ZERO\";\n";
     fwrite($fp, $header);
 
     foreach (demo_enum_tables() as $table) {
@@ -75,8 +81,6 @@ function _demo_dump_table_data($table) {
 
   // Get table fields.
   if ($fields = _demo_get_fields($result)) {
-    $num_fields = count($fields);
-
     // Escape backslashes, PHP code, special chars
     $search = array('\\', "'", "\x00", "\x0a", "\x0d", "\x1a");
     $replace = array('\\\\', "''", '\0', '\n', '\r', '\Z');
@@ -97,19 +101,16 @@ function _demo_dump_table_data($table) {
         }
         // A number
         // timestamp is numeric on some MySQL 4.1, BLOBs are sometimes numeric
-        else if ($fields['meta'][$field]->numeric
-          && $fields['meta'][$field]->type != 'timestamp'
-          && !($fields['meta'][$field]->blob)) {
+        else if ($fields[$field]->numeric && !$fields[$field]->timestamp && !$fields[$field]->blob) {
           $values[] = $value;
         }
-        // A binary field
-        // Note: with mysqli, under MySQL 4.1.3, we get the flag
-        // "binary" for those field types (I don't know why)
-        else if (stristr($fields['flags'][$field], 'binary')
-          && $fields['meta'][$field]->type != 'datetime'
-          && $fields['meta'][$field]->type != 'date'
-          && $fields['meta'][$field]->type != 'time'
-          && $fields['meta'][$field]->type != 'timestamp') {
+        // A true BLOB
+        // - mysqldump only generates hex data when the --hex-blob
+        //   option is used, for fields having the binary attribute
+        //   no hex is generated
+        // - a TEXT field returns type blob but a real blob
+        //   returns also the 'binary' flag
+        else if ($fields[$field]->binary && $fields[$field]->blob) {
           // Empty blobs need to be different, but '0' is also empty :-(
           if (empty($value) && $value != '0') {
               $values[] = "''";
@@ -154,11 +155,33 @@ function _demo_dump_table_data($table) {
  */
 function _demo_get_fields($result) {
   $fields = array();
-  $num_fields = mysql_num_fields($result);
-  for ($i = 0; $i < $num_fields; $i++) {
-    $fields['meta'][] = mysql_fetch_field($result, $i);
-    $fields['flags'][] = mysql_field_flags($result, $i);
+
+  switch ($GLOBALS['db_type']) {
+    case 'mysql':
+      $num_fields = mysql_num_fields($result);
+      for ($i = 0; $i < $num_fields; $i++) {
+        $meta = mysql_fetch_field($result, $i);
+        // Enhance field definition with custom properties.
+        $meta->timestamp = (int)($meta->type == 'timestamp');
+        $flags = mysql_field_flags($result, $i);
+        $meta->binary = (int)(stristr($flags, 'binary') !== FALSE);
+        $fields[] = $meta;
+      }
+      break;
+
+    case 'mysqli':
+      while ($meta = mysqli_fetch_field($result)) {
+        // Enhance the field definition for mysql-extension compatibilty.
+        $meta->numeric = (int)(bool)($meta->flags & MYSQLI_NUM_FLAG);
+        $meta->blob = (int)(bool)($meta->flags & MYSQLI_BLOB_FLAG);
+        // Add custom properties.
+        $meta->timestamp = (int)($meta->type == MYSQLI_TYPE_TIMESTAMP);
+        $meta->binary = (int)(bool)($meta->flags & MYSQLI_BINARY_FLAG);
+        $fields[] = $meta;
+      }
+      break;
   }
+
   return $fields;
 }
 
