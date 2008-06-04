@@ -6,6 +6,7 @@ Demo x.x-x.x, xxxx-xx-xx
 
 Demo 6.x-1.x, xxxx-xx-xx
 ------------------------
+#265801 by smk-ka: Added exclusion of data in cache tables for snapshots.
 
 
 Demo 6.x-1.1, 2008-04-29
