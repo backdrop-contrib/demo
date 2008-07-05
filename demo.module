@@ -233,6 +233,9 @@ function demo_dump_submit($form, &$form_state) {
   }
   require_once drupal_get_path('module', 'demo') ."/database_{$engine}_dump.inc";
 
+  // Increase PHP's max_execution_time for large dumps.
+  @set_time_limit(600);
+
   // Perform dump
   $fileconfig = demo_get_fileconfig($info['filename']);
   $exclude = array('{cache}', '{cache_content}', '{cache_filter}', '{cache_menu}', '{cache_page}', '{cache_views}', '{panels_object_cache}', '{watchdog}');
@@ -253,6 +256,9 @@ function demo_reset_confirm() {
 }
 
 function demo_reset_confirm_submit($form, &$form_state) {
+  // Increase PHP's max_execution_time for large dumps.
+  @set_time_limit(600);
+
   // Reset site to chosen snapshot
   demo_reset($form_state['values']['filename']);
   // Save time of last reset
