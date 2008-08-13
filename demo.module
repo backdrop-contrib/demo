@@ -345,14 +345,14 @@ function demo_reset($filename = 'demo_site', $verbose = TRUE) {
 
     // Reset default dump to load on cron.
     variable_set('demo_dump_cron', $demo_dump_cron);
+    return TRUE;
   }
-  else {
-    $message = t('Unable to open dump file %filename.', array('%filename' => $fileconfig['sqlfile']));
-    if ($verbose) {
-      drupal_set_message($message, 'error');
-    }
-    watchdog('demo', $message, WATCHDOG_ERROR);
+  $message = t('Unable to open dump file %filename.', array('%filename' => $fileconfig['sqlfile']));
+  if ($verbose) {
+    drupal_set_message($message, 'error');
   }
+  watchdog('demo', $message, WATCHDOG_ERROR);
+  return FALSE;
 }
 
 function demo_get_fileconfig($filename = 'demo_site') {
