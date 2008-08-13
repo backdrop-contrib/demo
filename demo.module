@@ -201,7 +201,7 @@ function demo_dump() {
     '#type' => 'textfield',
     '#autocomplete_path' => 'demo/autocomplete',
     '#required' => true,
-    '#maxlength' => 30,
+    '#maxlength' => 128,
     '#description' => t('Enter the snapshot file name without file extension. Allowed characters are a-z, 0-9, dashes ("-"), underscores ("_") and dots.'),
   );
   $form['dump']['description'] = array(
