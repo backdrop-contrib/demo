@@ -81,6 +81,9 @@ function _demo_dump_table_data($table) {
 
   // Get table fields.
   if ($fields = _demo_get_fields($result)) {
+    // Disable indices to speed up import.
+    $output .= "/*!40000 ALTER TABLE $table DISABLE KEYS */;\n";
+
     // Escape backslashes, PHP code, special chars
     $search = array('\\', "'", "\x00", "\x0a", "\x0d", "\x1a");
     $replace = array('\\\\', "''", '\0', '\n', '\r', '\Z');
@@ -145,6 +148,9 @@ function _demo_dump_table_data($table) {
     if ($current_row > 0) {
       $output .= ";\n";
     }
+
+    // Enable indices again.
+    $output .= "/*!40000 ALTER TABLE $table ENABLE KEYS */;\n";
   }
 
   return $output;
