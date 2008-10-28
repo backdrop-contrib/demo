@@ -6,12 +6,14 @@ Demo x.x-x.x, xxxx-xx-xx
 
 Demo 6.x-1.x, xxxx-xx-xx
 ------------------------
+#299841 by sun: Fixed wrong function arguments for watchdog().
 #286781 by alex_b: Added function return value for demo_reset().
 #272820 by sun: Increased maxlength for snapshot file names.
 #269561 by smk-ka: Performance: Disable indices to speed up import.
 #272526 by smk-ka: Added file size to snapshot list.
 #268056 by sun: Fixed incomplete snapshots due to max_execution_time reached.
 #265801 by smk-ka: Added exclusion of data in cache tables for snapshots.
+#312215 by rondp: Added foreign key support.
 
 
 Demo 6.x-1.1, 2008-04-29
