@@ -38,7 +38,7 @@ function demo_dump_db($filename, $exclude = array()) {
     }
 
     // Re-enable foreign key checks.
-    fwrite($fp, "\nSET FOREIGN_KEY_CHECKS = 1;\n";);
+    fwrite($fp, "\nSET FOREIGN_KEY_CHECKS = 1;\n");
 
     fclose($fp);
     return TRUE;
