@@ -14,6 +14,7 @@ Demo 6.x-1.x, xxxx-xx-xx
 #268056 by sun: Fixed incomplete snapshots due to max_execution_time reached.
 #265801 by smk-ka: Added exclusion of data in cache tables for snapshots.
 #312215 by rondp: Added foreign key support.
+#294879 by smk-ka: Moved admin functions into include file.
 
 
 Demo 6.x-1.1, 2008-04-29
