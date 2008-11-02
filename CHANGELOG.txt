@@ -6,6 +6,7 @@ Demo x.x-x.x, xxxx-xx-xx
 
 Demo 6.x-1.x, xxxx-xx-xx
 ------------------------
+#329182 by sun: Moved menu items below admin/build.
 #299841 by sun: Fixed wrong function arguments for watchdog().
 #286781 by alex_b: Added function return value for demo_reset().
 #272820 by sun: Increased maxlength for snapshot file names.
