@@ -100,10 +100,28 @@ function demo_manage_submit($form, &$form_state) {
 }
 
 function demo_manage_delete_submit($form, &$form_state) {
+  $form_state['redirect'] = 'admin/build/demo/delete/'. $form_state['values']['filename'];
+}
+
+function demo_delete_confirm(&$form_state, $filename) {
+  $fileconfig = demo_get_fileconfig($filename);
+  if (!file_exists($fileconfig['infofile'])) {
+    return drupal_access_denied();
+  }
+
+  $form['filename'] = array(
+    '#type' => 'value',
+    '#value' => $filename,
+  );
+  return confirm_form($form, t('Are you sure you want to delete the snapshot %title?', array('%title' => $filename)), 'admin/build/demo/manage', t('This action cannot be undone.'), t('Delete'));
+}
+
+function demo_delete_confirm_submit($form, &$form_state) {
   $files = demo_get_fileconfig($form_state['values']['filename']);
   unlink($files['sqlfile']);
   unlink($files['infofile']);
   drupal_set_message(t('Snapshot %title has been deleted.', array('%title' => $form_state['values']['filename'])));
+  $form_state['redirect'] = 'admin/build/demo/manage';
 }
 
 function demo_dump() {

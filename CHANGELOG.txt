@@ -17,6 +17,7 @@ Demo 6.x-1.x, xxxx-xx-xx
 #312215 by rondp: Added foreign key support.
 #294879 by smk-ka: Moved admin functions into include file.
 #369642 by smk-ka: Added checkbox to define new snapshot as default.
+#369711 by smk-ka: Added confirmation before deleting a snapshot.
 
 
 Demo 6.x-1.1, 2008-04-29

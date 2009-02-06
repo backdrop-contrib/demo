@@ -60,6 +60,14 @@ function demo_menu() {
     'type' => MENU_LOCAL_TASK,
     'weight' => 3,
   );
+  $items['admin/build/demo/delete/%'] = array(
+    'title' => 'Delete snapshot',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('demo_delete_confirm', 4),
+    'access arguments' => $admin_access,
+    'file' => 'demo.admin.inc',
+    'type' => MENU_CALLBACK,
+  );
   $items['demo/autocomplete'] = array(
     'title' => 'Demo Site autocomplete',
     'page callback' => 'demo_autocomplete',
