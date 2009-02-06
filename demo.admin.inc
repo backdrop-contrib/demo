@@ -175,6 +175,7 @@ function demo_dump_submit($form, &$form_state) {
     $exclude = array('{cache}', '{cache_content}', '{cache_filter}', '{cache_menu}', '{cache_page}', '{cache_views}', '{panels_object_cache}', '{watchdog}');
     $exclude = array_map('db_prefix_tables', $exclude);
     demo_dump_db($fileconfig['sqlfile'], $exclude);
+    drupal_set_message(t('Successfully created snapshot %filename.', array('%filename' => $fileconfig['sqlfile'])));
   }
   else {
     drupal_set_message(t('@engine support not implemented yet.', array('@engine' => ucfirst($engine))), 'error');
@@ -260,11 +261,10 @@ function demo_reset($filename = 'demo_site', $verbose = TRUE) {
     variable_set('demo_dump_cron', $demo_dump_cron);
     return TRUE;
   }
-  $message = t('Unable to open dump file %filename.', array('%filename' => $fileconfig['sqlfile']));
   if ($verbose) {
-    drupal_set_message($message, 'error');
+    drupal_set_message(t('Unable to open dump file %filename.', array('%filename' => $fileconfig['sqlfile'])), 'error');
   }
-  watchdog('demo', $message, array(), WATCHDOG_ERROR);
+  watchdog('demo', 'Unable to open dump file %filename.', array('%filename' => $fileconfig['sqlfile']), WATCHDOG_ERROR);
   return FALSE;
 }
 
