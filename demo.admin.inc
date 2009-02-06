@@ -244,15 +244,17 @@ function demo_reset($filename = 'demo_site', $verbose = TRUE) {
     fclose($fp);
 
     if ($success) {
-      $message = t('Successfully restored database from %filename.', array('%filename' => $fileconfig['sqlfile']));
+      if ($verbose) {
+        drupal_set_message(t('Successfully restored database from %filename.', array('%filename' => $fileconfig['sqlfile'])));
+      }
+      watchdog('demo', 'Successfully restored database from %filename.', array('%filename' => $fileconfig['sqlfile']), WATCHDOG_NOTICE);
     }
     else {
-      $message = t('Failed restoring database from %filename.', array('%filename' => $fileconfig['sqlfile']));
+      if ($verbose) {
+        drupal_set_message(t('Failed restoring database from %filename.', array('%filename' => $fileconfig['sqlfile'])));
+      }
+      watchdog('demo', 'Failed restoring database from %filename.', array('%filename' => $fileconfig['sqlfile']), WATCHDOG_ERROR);
     }
-    if ($verbose) {
-      drupal_set_message($message);
-    }
-    watchdog('demo', $message, array(), $success ? WATCHDOG_NOTICE : WATCHDOG_ERROR);
 
     // Reset default dump to load on cron.
     variable_set('demo_dump_cron', $demo_dump_cron);

@@ -18,6 +18,7 @@ Demo 6.x-1.x, xxxx-xx-xx
 #294879 by smk-ka: Moved admin functions into include file.
 #369642 by smk-ka: Added checkbox to define new snapshot as default.
 #369711 by smk-ka: Added confirmation before deleting a snapshot.
+by smk-ka: Made watchdog messages translatable (fixed a potx warning).
 
 
 Demo 6.x-1.1, 2008-04-29
