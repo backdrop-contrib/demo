@@ -172,7 +172,20 @@ function demo_dump_submit($form, &$form_state) {
   
     // Perform dump.
     $fileconfig = demo_get_fileconfig($info['filename']);
-    $exclude = array('{cache}', '{cache_content}', '{cache_filter}', '{cache_menu}', '{cache_page}', '{cache_views}', '{panels_object_cache}', '{watchdog}');
+    $exclude = array(
+      '{cache}',
+      '{cache_block}',
+      '{cache_content}',
+      '{cache_filter}',
+      '{cache_form}',
+      '{cache_menu}',
+      '{cache_page}',
+      '{cache_views}',
+      '{ctools_object_cache}',
+      '{panels_object_cache}',
+      '{views_object_cache}',
+      '{watchdog}',
+    );
     $exclude = array_map('db_prefix_tables', $exclude);
     demo_dump_db($fileconfig['sqlfile'], $exclude);
     drupal_set_message(t('Successfully created snapshot %filename.', array('%filename' => $fileconfig['sqlfile'])));

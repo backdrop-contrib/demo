@@ -6,6 +6,7 @@ Demo x.x-x.x, xxxx-xx-xx
 
 Demo 7.x-1.x, xxxx-xx-xx
 ------------------------
+#372113 by sun: Fixed not all cache tables are skipped.
 by smk-ka: Made watchdog messages translatable (fixed a potx warning).
 #369711 by smk-ka: Added confirmation before deleting a snapshot.
 #369642 by smk-ka: Added checkbox to define new snapshot as default.
