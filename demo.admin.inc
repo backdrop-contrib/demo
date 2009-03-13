@@ -148,8 +148,6 @@ function demo_dump() {
 }
 
 function demo_dump_submit($form, &$form_state) {
-  global $db_type;
-
   // Generate info file.
   $info = demo_set_info($form_state['values']);
   if (!$info) {
@@ -157,7 +155,7 @@ function demo_dump_submit($form, &$form_state) {
   }
   
   // Include database specific functions.
-  $engine = ($db_type == 'mysqli' ? 'mysql' : $db_type);
+  $engine = db_driver();
   $inc_file = drupal_get_path('module', 'demo') .'/database_'. $engine .'_dump.inc';
   if (file_exists($inc_file)) {
     require_once $inc_file;
@@ -180,13 +178,15 @@ function demo_dump_submit($form, &$form_state) {
       '{cache_form}',
       '{cache_menu}',
       '{cache_page}',
+      '{cache_path}',
+      '{cache_registry}',
       '{cache_views}',
       '{ctools_object_cache}',
       '{panels_object_cache}',
       '{views_object_cache}',
       '{watchdog}',
     );
-    $exclude = array_map('db_prefix_tables', $exclude);
+    $exclude = array_map(array('DatabaseConnection', 'prefixTables'), $exclude);
     demo_dump_db($fileconfig['sqlfile'], $exclude);
     drupal_set_message(t('Successfully created snapshot %filename.', array('%filename' => $fileconfig['sqlfile'])));
   }
@@ -214,7 +214,7 @@ function demo_reset_confirm_submit($form, &$form_state) {
   // Reset site to chosen snapshot.
   demo_reset($form_state['values']['filename']);
   // Save time of last reset.
-  variable_set('demo_reset_last', time());
+  variable_set('demo_reset_last', REQUEST_TIME);
   
   $form_state['redirect'] = isset($form_state['values']['redirect']) ? $form_state['values']['redirect'] : 'admin/build/demo';
 }
@@ -234,39 +234,38 @@ function demo_reset($filename = 'demo_site', $verbose = TRUE) {
   $version = demo_get_info($fileconfig['infofile'], 'version');
   $is_version_1_0_dump = version_compare($version, '1.1', '<');
 
-  // Drop tables
-  $dt_watchdog = db_prefix_tables('{watchdog}');
-  foreach (demo_enum_tables() as $table) {
-    // Skip watchdog, except for legacy dumps that included the watchdog table
-    if ($table != $dt_watchdog || $is_version_1_0_dump) {
-      db_query("DROP TABLE %s", $table);
-    }
-  }
-
-  // Load data from snapshot.
-  $success = TRUE;
-  $query = '';
-  $new_line = TRUE;
-
-  while (!feof($fp)) {
-    // Better performance on PHP 5.2.x when leaving out buffer size to
-    // fgets().
-    $data = fgets($fp);
-    if ($data === FALSE) {
-      break;
-    }
-    // Skip empty lines (including lines that start with a comment).
-    if ($new_line && ($data == "\n" || !strncmp($data, '--', 2) || !strncmp($data, '#', 1))) {
-      continue;
+  if (file_exists($fileconfig['sqlfile']) && $fp = fopen($fileconfig['sqlfile'], 'r')) {
+    // Drop tables
+    $dt_watchdog = DatabaseConnection::prefixTables('{watchdog}');
+    foreach (demo_enum_tables() as $table) {
+      // Skip watchdog, except for legacy dumps that included the watchdog table
+      if ($table != $dt_watchdog || $is_version_1_0_dump) {
+        db_query("DROP TABLE $table");
+      }
     }
 
-    $query .= $data;
-    $len = strlen($data);
-    if ($data[$len - 1] == "\n") {
-      if ($data[$len - 2] == ';') {
-        // Reached the end of a query, now execute it.
-        if (!_db_query($query, FALSE)) {
-          $success = FALSE;
+    // Load data from snapshot
+    $query = '';
+    $success = TRUE;
+    while (!feof($fp)) {
+      $line = fgets($fp, 16384);
+      if ($line && $line != "\n" && strncmp($line, '--', 2) && strncmp($line, '#', 1)) {
+        $query .= $line;
+        if (substr($line, -2) == ";\n") {
+          $options = array(
+            'target' => 'default',
+            'return' => Database::RETURN_NULL,
+//            'throw_exception' => FALSE,
+          );
+          $stmt = Database::getActiveConnection($options['target'])->prepare($query);
+          if (!$stmt->execute(array(), $options)) {
+            if ($verbose) {
+              // Don't use t() here, as the locale_* tables might not (yet) exist.
+              drupal_set_message(strtr('Query failed: %query', array('%query' => $query)), 'error');
+            }
+            $success = FALSE;
+          }
+          $query = '';
         }
         $query = '';
       }
@@ -337,7 +336,7 @@ function demo_get_dumps() {
   $fileconfig = demo_get_fileconfig();
   
   // Fetch list of available info files
-  $files = file_scan_directory($fileconfig['dumppath'], '.info$');
+  $files = file_scan_directory($fileconfig['dumppath'], '/.info$/');
 
   foreach ($files as $file => $object) {
     $files[$file]->filemtime = filemtime($file);
@@ -478,7 +477,7 @@ function demo_enum_tables() {
     $rx = '/^'. $db_prefix .'/';
   }
 
-  switch ($GLOBALS['db_type']) {
+  switch (db_driver()) {
     case 'mysql':
     case 'mysqli':
       $result = db_query("SHOW TABLES");
@@ -521,7 +520,7 @@ function demo_autocomplete($string = '') {
   $matches = array();
   if ($string && $fileconfig = demo_get_fileconfig()) {
     $string = preg_quote($string);
-    $files = file_scan_directory($fileconfig['dumppath'], $string .'.*\.info$');
+    $files = file_scan_directory($fileconfig['dumppath'], '/'. $string .'.*\.info$/');
     foreach ($files as $file) {
       $matches[$file->name] = check_plain($file->name);
    }

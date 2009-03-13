@@ -20,7 +20,7 @@ function demo_dump_db($filename, $exclude = array()) {
     $header .= "-- http://drupal.org/project/demo\n";
     $header .= "--\n";
     $header .= "-- Database: ". _demo_get_database() ."\n";
-    $header .= "-- Date: ". format_date(time(), 'large') ."\n\n";
+    $header .= "-- Date: ". format_date(REQUEST_TIME, 'large') ."\n\n";
     // Avoid auto value for zero values (required for user id 0).
     $header .= "SET SQL_MODE=\"NO_AUTO_VALUE_ON_ZERO\";\n";
     // Temporarily disable foreign key checks for the time of import.
@@ -65,8 +65,12 @@ function _demo_dump_table_structure($table) {
   $output .= "-- Table structure for table '$table'\n";
   $output .= "--\n\n";
 
-  $data = db_fetch_array(db_query("SHOW CREATE TABLE %s", $table));
-  $output .= preg_replace('/^CREATE TABLE/', 'CREATE TABLE IF NOT EXISTS', $data['Create Table']) .";\n";
+  $data = db_fetch_array(db_query("SHOW CREATE TABLE `$table`"));
+  $output .= preg_replace(
+    array('/^CREATE TABLE/', '/"/'),
+    array('CREATE TABLE IF NOT EXISTS', '`'),
+    $data['create table']
+  ) .";\n";
 
   return $output;
 }
@@ -83,7 +87,7 @@ function _demo_dump_table_data($table) {
   $output .= "--\n\n";
   
   // Dump table data
-  $result = db_query("SELECT * FROM %s", $table);
+  $result = db_query("SELECT * FROM `$table`");
 
   // Get table fields.
   if ($fields = _demo_get_fields($result)) {
@@ -168,28 +172,19 @@ function _demo_dump_table_data($table) {
 function _demo_get_fields($result) {
   $fields = array();
 
-  switch ($GLOBALS['db_type']) {
+  switch (db_driver()) {
     case 'mysql':
-      $num_fields = mysql_num_fields($result);
-      for ($i = 0; $i < $num_fields; $i++) {
-        $meta = mysql_fetch_field($result, $i);
-        // Enhance field definition with custom properties.
-        $meta->timestamp = (int)($meta->type == 'timestamp');
-        $flags = mysql_field_flags($result, $i);
-        $meta->binary = (int)(stristr($flags, 'binary') !== FALSE);
-        $fields[] = $meta;
-      }
-      break;
-
-    case 'mysqli':
-      while ($meta = mysqli_fetch_field($result)) {
+      $i = 0;
+      while ($meta = $result->getColumnMeta($i)) {
+        settype($meta, 'object');
         // Enhance the field definition for mysql-extension compatibilty.
-        $meta->numeric = (int)(bool)($meta->flags & MYSQLI_NUM_FLAG);
-        $meta->blob = (int)(bool)($meta->flags & MYSQLI_BLOB_FLAG);
+        $meta->numeric = (strtolower($meta->native_type) == 'short');
+        $meta->blob = (strtolower($meta->native_type) == 'blob');
         // Add custom properties.
-        $meta->timestamp = (int)($meta->type == MYSQLI_TYPE_TIMESTAMP);
-        $meta->binary = (int)(bool)($meta->flags & MYSQLI_BINARY_FLAG);
+        $meta->timestamp = (strtolower($meta->native_type) == 'long');
+        $meta->binary = (array_search('not_null', $meta->flags));
         $fields[] = $meta;
+        $i++;
       }
       break;
   }

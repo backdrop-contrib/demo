@@ -2,4 +2,7 @@
 name = Demo Site
 description = Create snapshots and reset the site for demonstration or testing purposes.
 package = Development
-core = 6.x
+core = 7.x
+files[] = demo.module
+files[] = demo.admin.inc
+files[] = database_mysql_dump.inc
