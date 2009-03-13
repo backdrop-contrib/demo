@@ -11,7 +11,8 @@ if (!defined('MYSQLI_BINARY_FLAG')) {
  */
 function demo_dump_db($filename, $exclude = array()) {
   // Make sure we have permission to save our backup file.
-  if (!file_check_directory(dirname($filename), FILE_CREATE_DIRECTORY)) {
+  $directory = dirname($filename);
+  if (!file_check_directory($directory, FILE_CREATE_DIRECTORY)) {
     return FALSE;
   }
 
