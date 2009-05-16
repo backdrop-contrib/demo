@@ -1,0 +1,36 @@
+<?php
+// $Id$
+
+/**
+ * @file
+ * Demonstration site module installation functions.
+ */
+
+/**
+ * Move existing dumps to new directory without site name sub-folder.
+ */
+function demo_update_6100() {
+  $ret = array();
+
+  // If file_directory_path() contains the site name already or is
+  // 'sites/all/files', create new folder without site name and move existing
+  // files to the new location.
+  if (strpos(file_directory_path(), conf_path()) !== FALSE || strpos(file_directory_path(), '/all/') !== FALSE) {
+    $new_path = file_directory_path() .'/demo';
+    $old_path = $new_path . str_replace('sites', '', conf_path());
+    if ($new_path != $old_path && file_check_directory($old_path)) {
+      // Fetch list of available files.
+      $files = file_scan_directory($old_path, '/\.(info|sql)$/');
+      foreach ($files as $file) {
+        rename($file->filename, $new_path .'/'. $file->basename);
+      }
+      // Ignore any warnings from rmdir() about remaining files in the old
+      // directory (they will NOT be deleted).
+      @rmdir($old_path);
+      $ret[] = array('success' => TRUE, 'query' => strtr('Demo snapshot files have been successfully moved to <em>%path</em>.', array('%path' => $new_path)));
+    }
+  }
+
+  return $ret;
+}
+

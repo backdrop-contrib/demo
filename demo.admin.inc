@@ -55,7 +55,7 @@ function demo_admin_settings() {
     '#title' => t('Dump path'),
     '#default_value' => $fileconfig['path'],
     '#size' => 30,
-    '#description' => t('Enter a writable directory where dump files of this demonstration site are stored, f.e. %files. The name of this site (e.g. %confpath) is automatically appended to this directory.<br /><br /><strong>Note: For security reasons you should store site dumps outside of the document root of your webspace!</strong>', array('%files' => file_directory_path() .'/demo', '%confpath' => $fileconfig['site'])),
+    '#description' => t('Enter a writable directory where dump files of this demonstration site are stored, f.e. %files. The name of this site (e.g. %confpath) is automatically appended to this directory, if required.<br /><br /><strong>Note: For security reasons you should store site dumps outside of the document root of your webspace!</strong>', array('%files' => file_directory_path() .'/demo', '%confpath' => $fileconfig['site'])),
   );
   $form[] = array(
     '#type' => 'submit',
@@ -302,13 +302,18 @@ function demo_get_fileconfig($filename = 'demo_site') {
   
   // Build dump path.
   $fileconfig['path'] = variable_get('demo_dump_path', file_directory_path() .'/demo');
+  $fileconfig['dumppath'] = $fileconfig['path'];
+  // Append site name if it is not included in file_directory_path() and if not
+  // storing files in sites/all/files.
   $fileconfig['site'] = str_replace('sites', '', conf_path());
-  $fileconfig['dumppath'] = $fileconfig['path'] . $fileconfig['site'];
+  if (strpos(file_directory_path(), conf_path()) === FALSE && strpos(file_directory_path(), '/all/') === FALSE) {
+    $fileconfig['dumppath'] .= $fileconfig['site'];
+  }
   
   // Check if directory exists.
   file_check_directory($fileconfig['path'], FILE_CREATE_DIRECTORY, 'path');
   if (!file_check_directory($fileconfig['dumppath'], FILE_CREATE_DIRECTORY, 'path')) {
-    return false;
+    return FALSE;
   }
   
   // Protect dump files.
@@ -323,11 +328,11 @@ function demo_get_fileconfig($filename = 'demo_site') {
     
   // Build SQL filename.
   $fileconfig['sql'] = $filename .'.sql';
-  $fileconfig['sqlfile'] = $fileconfig['path'] . $fileconfig['site'] .'/'. $filename .'.sql';
+  $fileconfig['sqlfile'] = $fileconfig['dumppath'] .'/'. $fileconfig['sql'];
   
   // Build info filename.
   $fileconfig['info'] = $filename .'.info';
-  $fileconfig['infofile'] = $fileconfig['path'] . $fileconfig['site'] .'/'. $filename .'.info';
+  $fileconfig['infofile'] = $fileconfig['dumppath'] .'/'. $fileconfig['info'];
   
   return $fileconfig;
 }
@@ -336,7 +341,7 @@ function demo_get_dumps() {
   $fileconfig = demo_get_fileconfig();
   
   // Fetch list of available info files
-  $files = file_scan_directory($fileconfig['dumppath'], '/.info$/');
+  $files = file_scan_directory($fileconfig['dumppath'], '/\.info$/');
 
   foreach ($files as $file => $object) {
     $files[$file]->filemtime = filemtime($file);

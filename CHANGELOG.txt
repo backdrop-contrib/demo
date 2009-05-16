@@ -6,6 +6,7 @@ Demo x.x-x.x, xxxx-xx-xx
 
 Demo 7.x-1.x, xxxx-xx-xx
 ------------------------
+#256714 by smk-ka, sun: Removed site name sub-folder from dump directory path.
 #393186 by sun: Fixed fatal error: Only variables can be passed by reference.
 #361301 by sun: Ported to 7.x.
 #372113 by sun: Fixed not all cache tables are skipped.
