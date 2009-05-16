@@ -306,7 +306,7 @@ function demo_get_fileconfig($filename = 'demo_site') {
   // Append site name if it is not included in file_directory_path() and if not
   // storing files in sites/all/files.
   $fileconfig['site'] = str_replace('sites', '', conf_path());
-  if (strpos(file_directory_path(), conf_path()) === FALSE && strpos(file_directory_path(), '/all/') === FALSE) {
+  if (strpos($fileconfig['path'], conf_path()) === FALSE && strpos($fileconfig['path'], '/all/') === FALSE) {
     $fileconfig['dumppath'] .= $fileconfig['site'];
   }
   

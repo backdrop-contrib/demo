@@ -15,8 +15,8 @@ function demo_update_6100() {
   // If file_directory_path() contains the site name already or is
   // 'sites/all/files', create new folder without site name and move existing
   // files to the new location.
-  if (strpos(file_directory_path(), conf_path()) !== FALSE || strpos(file_directory_path(), '/all/') !== FALSE) {
-    $new_path = file_directory_path() .'/demo';
+  $new_path = variable_get('demo_dump_path', file_directory_path() .'/demo');
+  if (strpos($new_path, conf_path()) !== FALSE || strpos($new_path, '/all/') !== FALSE) {
     $old_path = $new_path . str_replace('sites', '', conf_path());
     if ($new_path != $old_path && file_check_directory($old_path)) {
       // Fetch list of available files.
