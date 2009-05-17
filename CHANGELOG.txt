@@ -6,6 +6,7 @@ Demo x.x-x.x, xxxx-xx-xx
 
 Demo 7.x-1.x, xxxx-xx-xx
 ------------------------
+by sun: Fixed coding-style.
 #256714 by sun: Fixed site name sub-folder no longer appended.
 #256714 by smk-ka, sun: Removed site name sub-folder from dump directory path.
 #393186 by sun: Fixed fatal error: Only variables can be passed by reference.

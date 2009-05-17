@@ -85,9 +85,10 @@ function demo_block($op = 'list', $delta = 0, $edit = array()) {
   switch ($op) {
     case 'list':
       $blocks[0] = array('info' => t('Demo site reset'),
-        'status' => 1, 'region' => 'right', 'cache' => BLOCK_NO_CACHE);
+        'status' => 1, 'region' => 'right', 'cache' => BLOCK_NO_CACHE,
+      );
       return $blocks;
-    
+
     case 'view':
       $block = array(
         'subject' => t('Reset demo'),

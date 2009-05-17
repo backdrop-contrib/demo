@@ -17,11 +17,11 @@ function demo_dump_db($filename, $exclude = array()) {
   }
 
   if ($fp = fopen($filename, 'wb')) {
-    $header  = "-- Demo.module database dump (version ". DEMO_DUMP_VERSION .")\n";
+    $header = "-- Demo.module database dump (version " . DEMO_DUMP_VERSION . ")\n";
     $header .= "-- http://drupal.org/project/demo\n";
     $header .= "--\n";
-    $header .= "-- Database: ". _demo_get_database() ."\n";
-    $header .= "-- Date: ". format_date(REQUEST_TIME, 'large') ."\n\n";
+    $header .= "-- Database: " . _demo_get_database() . "\n";
+    $header .= "-- Date: " . format_date(REQUEST_TIME, 'large') . "\n\n";
     // Avoid auto value for zero values (required for user id 0).
     $header .= "SET SQL_MODE=\"NO_AUTO_VALUE_ON_ZERO\";\n";
     // Temporarily disable foreign key checks for the time of import.
@@ -61,7 +61,7 @@ function _demo_get_database() {
  * Dump table structure.
  */
 function _demo_dump_table_structure($table) {
-  $output  = "\n";
+  $output = "\n";
   $output .= "--\n";
   $output .= "-- Table structure for table '$table'\n";
   $output .= "--\n\n";
@@ -71,7 +71,7 @@ function _demo_dump_table_structure($table) {
     array('/^CREATE TABLE/', '/"/'),
     array('CREATE TABLE IF NOT EXISTS', '`'),
     $data['create table']
-  ) .";\n";
+  ) . ";\n";
 
   return $output;
 }
@@ -82,11 +82,11 @@ function _demo_dump_table_structure($table) {
  * This code has largely been stolen from the phpMyAdmin project.
  */
 function _demo_dump_table_data($table) {
-  $output  = "\n";
+  $output = "\n";
   $output .= "--\n";
   $output .= "-- Dumping data for table '$table'\n";
   $output .= "--\n\n";
-  
+
   // Dump table data
   $result = db_query("SELECT * FROM `$table`");
 
@@ -127,23 +127,24 @@ function _demo_dump_table_data($table) {
         else if ($fields[$field]->binary && $fields[$field]->blob) {
           // Empty blobs need to be different, but '0' is also empty :-(
           if (empty($value) && $value != '0') {
-              $values[] = "''";
-          } else {
-              $values[] = '0x' . bin2hex($value);
+            $values[] = "''";
+          }
+          else {
+            $values[] = '0x' . bin2hex($value);
           }
         }
         // Something else -> treat as a string
         else {
-          $values[] = "'". str_replace($search, $replace, $value) ."'";
+          $values[] = "'" . str_replace($search, $replace, $value) . "'";
         }
         $field++;
       }
 
       if ($current_row == 1) {
-        $insert_buffer = $insert_cmd . '('. implode(', ', $values) . ')';
+        $insert_buffer = $insert_cmd . '(' . implode(', ', $values) . ')';
       }
       else {
-        $insert_buffer = '('. implode(', ', $values) . ')';
+        $insert_buffer = '(' . implode(', ', $values) . ')';
         if ($query_size + strlen($insert_buffer) > 50000) {
           $output .= ";\n";
           $current_row = 1;

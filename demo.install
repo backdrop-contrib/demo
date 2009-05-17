@@ -15,14 +15,14 @@ function demo_update_6100() {
   // If file_directory_path() contains the site name already or is
   // 'sites/all/files', create new folder without site name and move existing
   // files to the new location.
-  $new_path = variable_get('demo_dump_path', file_directory_path() .'/demo');
+  $new_path = variable_get('demo_dump_path', file_directory_path() . '/demo');
   if (strpos($new_path, conf_path()) !== FALSE || strpos($new_path, '/all/') !== FALSE) {
     $old_path = $new_path . str_replace('sites', '', conf_path());
     if ($new_path != $old_path && file_check_directory($old_path)) {
       // Fetch list of available files.
       $files = file_scan_directory($old_path, '/\.(info|sql)$/');
       foreach ($files as $file) {
-        rename($file->filename, $new_path .'/'. $file->basename);
+        rename($file->filename, $new_path . '/' . $file->basename);
       }
       // Ignore any warnings from rmdir() about remaining files in the old
       // directory (they will NOT be deleted).
