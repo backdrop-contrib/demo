@@ -269,11 +269,6 @@ function demo_reset($filename = 'demo_site', $verbose = TRUE) {
         }
         $query = '';
       }
-      $new_line = TRUE;
-    }
-    else {
-      // Continue adding data from the same line.
-      $new_line = FALSE;
     }
   }
   fclose($fp);
@@ -384,13 +379,13 @@ function demo_get_dumps() {
       sort($info['modules']);
       $option['#description'] .= t('Modules: ') . implode(', ', $info['modules']);
     }
-    $option['#attributes'] = array('onclick' => "$('.description', this.parentNode.parentNode).slideToggle();");
+    $option['#attributes'] = array('onclick' => "jQuery('.description', this.parentNode.parentNode).slideToggle();");
 
     $options['dump'][] = $option;
   }
 
   // Attach stylesheet to initially hide descriptions
-  drupal_add_js("$('div.form-item div.description', $('form')).hide();", 'inline', 'footer');
+  drupal_add_js("jQuery('div.form-item div.description', jQuery('form')).hide();", array('type' => 'inline', 'scope' => 'footer'));
 
   return $options;
 }

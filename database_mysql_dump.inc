@@ -179,11 +179,17 @@ function _demo_get_fields($result) {
       $i = 0;
       while ($meta = $result->getColumnMeta($i)) {
         settype($meta, 'object');
-        // Enhance the field definition for mysql-extension compatibilty.
-        $meta->numeric = (strtolower($meta->native_type) == 'short');
-        $meta->blob = (strtolower($meta->native_type) == 'blob');
-        // Add custom properties.
-        $meta->timestamp = (strtolower($meta->native_type) == 'long');
+        // pdo_mysql does not add a native type for INT fields.
+        if (isset($meta->native_type)) {
+          // Enhance the field definition for mysql-extension compatibilty.
+          $meta->numeric = (strtolower($meta->native_type) == 'short');
+          $meta->blob = (strtolower($meta->native_type) == 'blob');
+          // Add custom properties.
+          $meta->timestamp = (strtolower($meta->native_type) == 'long');
+        }
+        else {
+          $meta->numeric = $meta->blob = $meta->timestamp = FALSE;
+        }
         $meta->binary = (array_search('not_null', $meta->flags));
         $fields[] = $meta;
         $i++;
