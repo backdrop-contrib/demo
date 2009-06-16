@@ -274,6 +274,9 @@ function demo_reset($filename = 'demo_site', $verbose = TRUE) {
   fclose($fp);
 
   if ($success) {
+    // Allow other modules to act on successful resets.
+    module_invoke_all('demo_reset');
+
     if ($verbose) {
       drupal_set_message(t('Successfully restored database from %filename.', array('%filename' => $fileconfig['sqlfile'])));
     }
