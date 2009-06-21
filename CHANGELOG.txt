@@ -6,6 +6,7 @@ Demo x.x-x.x, xxxx-xx-xx
 
 Demo 7.x-1.x, xxxx-xx-xx
 ------------------------
+#496620 by evoltech: Fixed paths in README.txt.
 by smk-ka: Added admin_menu cache table to exclude list.
 #489666 by stella: Added hook invocation after successful reset.
 by sun: Fixed PHP notices for non-existing key $meta->native_type.

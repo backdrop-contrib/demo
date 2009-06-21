@@ -32,23 +32,23 @@ Bug reports, feature suggestions and latest developments:
 -- CONFIGURATION --
 
 * Configure the path where dumps will be stored at the Dump settings
-  (admin/settings/demo).
+  (admin/build/demo).
 
 To configure automatic reset:
 
-* Go to Manage snapshots (admin/settings/demo/manage) and select a snapshot
+* Go to Manage snapshots (admin/build/demo/manage) and select a snapshot
   for cron.
 
-* Enable atomatic reset from Dump settings (admin/settings/demo). Make sure you
+* Enable atomatic reset from Dump settings (admin/build/demo). Make sure you
   have cron configured to run at least once within the entered time interval.
 
 
 -- USAGE --
 
-* Go to Create snapshot (admin/settings/demo/dump) and create your first
+* Go to Create snapshot (admin/build/demo/dump) and create your first
   snapshot.
 
-* After a while, reset your site (admin/settings/demo/reset).
+* After a while, reset your site (admin/build/demo/reset).
 
 
 -- CONTACT --
