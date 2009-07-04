@@ -258,7 +258,7 @@ function demo_reset($filename = 'demo_site', $verbose = TRUE) {
             'return' => Database::RETURN_NULL,
             // 'throw_exception' => FALSE,
           );
-          $stmt = Database::getActiveConnection($options['target'])->prepare($query);
+          $stmt = Database::getConnection($options['target'])->prepare($query);
           if (!$stmt->execute(array(), $options)) {
             if ($verbose) {
               // Don't use t() here, as the locale_* tables might not (yet) exist.
@@ -268,7 +268,6 @@ function demo_reset($filename = 'demo_site', $verbose = TRUE) {
           }
           $query = '';
         }
-        $query = '';
       }
     }
   }

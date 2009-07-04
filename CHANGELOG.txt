@@ -6,6 +6,7 @@ Demo x.x-x.x, xxxx-xx-xx
 
 Demo 7.x-1.x, xxxx-xx-xx
 ------------------------
+#361301 by cwgordon7: Updated/Fixed reset functionality.
 #496620 by evoltech: Fixed paths in README.txt.
 by smk-ka: Added admin_menu cache table to exclude list.
 #489666 by stella: Added hook invocation after successful reset.
