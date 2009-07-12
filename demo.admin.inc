@@ -373,8 +373,13 @@ function demo_get_dumps() {
     }
     $option['#description'] = '';
     if (!empty($info['description'])) {
-      $option['#description'] .= $info['description'] . '<br /><br />';
+      $option['#description'] .= '<p>' . $info['description'] . '</p>';
     }
+    $targs = array(
+      '@info-file-url' => url('demo/download/' . $file->name . '/info'),
+      '@sql-file-url' => url('demo/download/' . $file->name . '/sql'),
+    );
+    $option['#description'] .= '<p>' . t('Download: <a href="@info-file-url">.info file</a>, <a href="@sql-file-url">.sql file</a>', $targs) . '</p>';
     if (count($info['modules']) > 1) {
       // Remove required core modules and obvious modules from module list.
       $info['modules'] = array_diff($info['modules'], array('block', 'filter', 'node', 'system', 'user', 'watchdog', 'demo'));
@@ -531,6 +536,31 @@ function demo_autocomplete($string = '') {
   }
   print drupal_to_js($matches);
   exit();
+}
+
+/**
+ * Transfer (download) a snapshot file.
+ *
+ * @param $filename
+ *   The snapshot filename to transfer.
+ * @param $type
+ *   The file type, i.e. extension to transfer.
+ *
+ * @todo Allow to download an bundled archive of snapshot files.
+ */
+function demo_download($filename, $type) {
+  $fileconfig = demo_get_fileconfig($filename);
+  if (!isset($fileconfig[$type . 'file']) || !file_exists($fileconfig[$type . 'file'])) {
+    return MENU_NOT_FOUND;
+  }
+  // Force the client to re-download and trigger a file save download.
+  $headers = array(
+    'Cache-Control: private',
+    'Content-Type: application/octet-stream',
+    'Content-Length: ' . filesize($fileconfig[$type . 'file']),
+    'Content-Disposition: attachment, filename=' . $fileconfig[$type],
+  );
+  file_transfer($fileconfig[$type . 'file'], $headers);
 }
 
 /**
