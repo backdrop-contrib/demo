@@ -85,11 +85,11 @@ function demo_manage() {
   $form = array_merge_recursive($form, demo_get_dumps());
   $form[] = array(
     '#type' => 'submit',
-    '#value' => t('Set as default snapshot for cron'),
+    '#value' => t('Use for cron runs'),
   );
   $form[] = array(
     '#type' => 'submit',
-    '#value' => t('Delete selected snapshot'),
+    '#value' => t('Delete'),
     '#submit' => array('demo_manage_delete_submit'),
   );
   return $form;
