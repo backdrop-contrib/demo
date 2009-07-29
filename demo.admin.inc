@@ -47,7 +47,7 @@ function demo_admin_settings() {
     '#title' => t('Automatically reset site every'),
     '#default_value' => variable_get('demo_reset_interval', 0),
     '#options' => $period,
-    '#description' => t('Select how often this demonstration site is automatically reset. Ensure that you have chosen a snapshot for cron runs in <a href="!manage">Manage snapshots</a> first. <strong>Note:</strong> This requires cron to run at least within this interval.', array('!manage' => url('admin/build/demo/manage'))),
+    '#description' => t('Select how often this demonstration site is automatically reset. Ensure that you have chosen a snapshot for cron runs in <a href="!manage">Manage snapshots</a> first. <strong>Note:</strong> This requires cron to run at least within this interval.', array('!manage' => url('admin/structure/demo/manage'))),
   );
 
   $form['dump']['path'] = array(
@@ -100,7 +100,7 @@ function demo_manage_submit($form, &$form_state) {
 }
 
 function demo_manage_delete_submit($form, &$form_state) {
-  $form_state['redirect'] = 'admin/build/demo/delete/' . $form_state['values']['filename'];
+  $form_state['redirect'] = 'admin/structure/demo/delete/' . $form_state['values']['filename'];
 }
 
 function demo_delete_confirm(&$form_state, $filename) {
@@ -113,7 +113,7 @@ function demo_delete_confirm(&$form_state, $filename) {
     '#type' => 'value',
     '#value' => $filename,
   );
-  return confirm_form($form, t('Are you sure you want to delete the snapshot %title?', array('%title' => $filename)), 'admin/build/demo/manage', t('This action cannot be undone.'), t('Delete'));
+  return confirm_form($form, t('Are you sure you want to delete the snapshot %title?', array('%title' => $filename)), 'admin/structure/demo/manage', t('This action cannot be undone.'), t('Delete'));
 }
 
 function demo_delete_confirm_submit($form, &$form_state) {
@@ -121,7 +121,7 @@ function demo_delete_confirm_submit($form, &$form_state) {
   unlink($files['sqlfile']);
   unlink($files['infofile']);
   drupal_set_message(t('Snapshot %title has been deleted.', array('%title' => $form_state['values']['filename'])));
-  $form_state['redirect'] = 'admin/build/demo/manage';
+  $form_state['redirect'] = 'admin/structure/demo/manage';
 }
 
 function demo_dump() {
@@ -144,7 +144,7 @@ function demo_dump() {
     '#rows' => 2,
     '#description' => t('Optionally enter a description for this snapshot here. If no description is given and a snapshot with the same filename already exists, the previous description is used.'),
   );
-  return confirm_form($form, t('Are you sure you want to create a new snapshot?'), 'admin/build/demo', t('If the above filename already exists, creating a new snapshot will overwrite the existing snapshot. This action cannot be undone.'), t('Create'), t('Cancel'));
+  return confirm_form($form, t('Are you sure you want to create a new snapshot?'), 'admin/structure/demo', t('If the above filename already exists, creating a new snapshot will overwrite the existing snapshot. This action cannot be undone.'), t('Create'), t('Cancel'));
 }
 
 function demo_dump_submit($form, &$form_state) {
@@ -195,7 +195,7 @@ function demo_dump_submit($form, &$form_state) {
     drupal_set_message(t('@engine support not implemented yet.', array('@engine' => ucfirst($engine))), 'error');
   }
 
-  $form_state['redirect'] = 'admin/build/demo/manage';
+  $form_state['redirect'] = 'admin/structure/demo/manage';
 }
 
 function demo_reset_confirm() {
@@ -205,7 +205,7 @@ function demo_reset_confirm() {
   );
   $form = array_merge_recursive($form, demo_get_dumps());
 
-  return confirm_form($form, t('Are you sure you want to reset the site?'), 'admin/build/demo', t('Resetting the site will overwrite all changes that have been made to this Drupal installation since the chosen snapshot.<br /><br /><div style="color: red; font-weight: bold; font-size: 18px;"><center>THIS ACTION CANNOT BE UNDONE!</center><br /></div>'), t('Reset'), t('Cancel'));
+  return confirm_form($form, t('Are you sure you want to reset the site?'), 'admin/structure/demo', t('Resetting the site will overwrite all changes that have been made to this Drupal installation since the chosen snapshot.<br /><br /><div style="color: red; font-weight: bold; font-size: 18px;"><center>THIS ACTION CANNOT BE UNDONE!</center><br /></div>'), t('Reset'), t('Cancel'));
 }
 
 function demo_reset_confirm_submit($form, &$form_state) {
@@ -217,7 +217,7 @@ function demo_reset_confirm_submit($form, &$form_state) {
   // Save time of last reset.
   variable_set('demo_reset_last', REQUEST_TIME);
 
-  $form_state['redirect'] = isset($form_state['values']['redirect']) ? $form_state['values']['redirect'] : 'admin/build/demo';
+  $form_state['redirect'] = isset($form_state['values']['redirect']) ? $form_state['values']['redirect'] : 'admin/structure/demo';
 }
 
 function demo_reset($filename = 'demo_site', $verbose = TRUE) {

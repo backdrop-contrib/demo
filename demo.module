@@ -25,19 +25,19 @@ function demo_menu() {
   $items = array();
   $admin_access = array('administer demo settings');
 
-  $items['admin/build/demo'] = array(
+  $items['admin/structure/demo'] = array(
     'title' => 'Demonstration site',
     'description' => 'Administer reset interval, create new dumps and manually reset this site.',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('demo_admin_settings'),
     'access arguments' => $admin_access,
   );
-  $items['admin/build/demo/maintenance'] = array(
+  $items['admin/structure/demo/maintenance'] = array(
     'title' => 'Status',
     'type' => MENU_DEFAULT_LOCAL_TASK,
     'weight' => 0,
   );
-  $items['admin/build/demo/manage'] = array(
+  $items['admin/structure/demo/manage'] = array(
     'title' => 'Manage snapshots',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('demo_manage'),
@@ -45,7 +45,7 @@ function demo_menu() {
     'type' => MENU_LOCAL_TASK,
     'weight' => 1,
   );
-  $items['admin/build/demo/dump'] = array(
+  $items['admin/structure/demo/dump'] = array(
     'title' => 'Create snapshot',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('demo_dump'),
@@ -53,7 +53,7 @@ function demo_menu() {
     'type' => MENU_LOCAL_TASK,
     'weight' => 2,
   );
-  $items['admin/build/demo/reset'] = array(
+  $items['admin/structure/demo/reset'] = array(
     'title' => 'Reset site',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('demo_reset_confirm'),
@@ -61,7 +61,7 @@ function demo_menu() {
     'type' => MENU_LOCAL_TASK,
     'weight' => 3,
   );
-  $items['admin/build/demo/delete/%'] = array(
+  $items['admin/structure/demo/delete/%'] = array(
     'title' => 'Delete snapshot',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('demo_delete_confirm', 4),
