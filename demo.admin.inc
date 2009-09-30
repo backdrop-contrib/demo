@@ -11,7 +11,7 @@
  */
 define('DEMO_DUMP_VERSION', '1.1');
 
-function demo_admin_settings() {
+function demo_admin_settings($form, &$form_state) {
   global $base_url;
 
   $form['status'] = array(
@@ -26,10 +26,10 @@ function demo_admin_settings() {
     $reset_date = t('Never');
   }
   $form['status'][] = array(
-    '#value' => t('<p><strong>Last reset:</strong> !date</p>', array('!date' => $reset_date)),
+    '#markup' => t('<p><strong>Last reset:</strong> !date</p>', array('!date' => $reset_date)),
   );
   $form['status'][] = array(
-    '#value' => t('<p><strong>Default snapshot:</strong> !snapshot</p>', array('!snapshot' => variable_get('demo_dump_cron', t('None')))),
+    '#markup' => t('<p><strong>Default snapshot:</strong> !snapshot</p>', array('!snapshot' => variable_get('demo_dump_cron', t('None')))),
   );
 
   $fileconfig = demo_get_fileconfig();
@@ -77,7 +77,7 @@ function demo_admin_settings_submit($form, &$form_state) {
   drupal_set_message(t('The configuration options have been saved.'));
 }
 
-function demo_manage() {
+function demo_manage($form, &$form_state) {
   $form['dump'] = array(
     '#type' => 'fieldset',
     '#title' => t('Available snapshots'),
@@ -103,7 +103,7 @@ function demo_manage_delete_submit($form, &$form_state) {
   $form_state['redirect'] = 'admin/structure/demo/delete/' . $form_state['values']['filename'];
 }
 
-function demo_delete_confirm(&$form_state, $filename) {
+function demo_delete_confirm($form, &$form_state, $filename) {
   $fileconfig = demo_get_fileconfig($filename);
   if (!file_exists($fileconfig['infofile'])) {
     return drupal_access_denied();
@@ -124,8 +124,7 @@ function demo_delete_confirm_submit($form, &$form_state) {
   $form_state['redirect'] = 'admin/structure/demo/manage';
 }
 
-function demo_dump() {
-  $form = array();
+function demo_dump($form, &$form_state) {
   $form['dump']['filename'] = array(
     '#title' => t('File name'),
     '#type' => 'textfield',
@@ -198,7 +197,7 @@ function demo_dump_submit($form, &$form_state) {
   $form_state['redirect'] = 'admin/structure/demo/manage';
 }
 
-function demo_reset_confirm() {
+function demo_reset_confirm($form, &$form_state) {
   $form['dump'] = array(
     '#type' => 'fieldset',
     '#title' => t('Available snapshots'),
@@ -296,10 +295,8 @@ function demo_reset($filename = 'demo_site', $verbose = TRUE) {
 }
 
 function demo_get_fileconfig($filename = 'demo_site') {
-  $fileconfig = array();
-
   // Build dump path.
-  $fileconfig['path'] = variable_get('demo_dump_path', file_directory_path() . '/demo');
+  $fileconfig['path'] = variable_get('demo_dump_path', file_directory_path('private') . '/demo');
   $fileconfig['dumppath'] = $fileconfig['path'];
   // Append site name if it is not included in file_directory_path() and if not
   // storing files in sites/all/files.
@@ -309,20 +306,13 @@ function demo_get_fileconfig($filename = 'demo_site') {
   }
 
   // Check if directory exists.
-  file_check_directory($fileconfig['path'], FILE_CREATE_DIRECTORY, 'path');
-  if (!file_check_directory($fileconfig['dumppath'], FILE_CREATE_DIRECTORY, 'path')) {
+  file_prepare_directory($fileconfig['path'], FILE_CREATE_DIRECTORY, 'path');
+  if (!file_prepare_directory($fileconfig['dumppath'], FILE_CREATE_DIRECTORY, 'path')) {
     return FALSE;
   }
 
   // Protect dump files.
-  $htaccess = $fileconfig['path'] . "/.htaccess";
-  if (!is_file($htaccess)) {
-    $htaccess_lines = "# demo.module snapshots\n# Do not let the webserver serve anything under here!\n#\nDeny from all\n";
-    if (($fp = fopen($htaccess, 'w')) && fputs($fp, $htaccess_lines)) {
-      fclose($fp);
-      chmod($htaccess, 0664);
-    }
-  }
+  file_create_htaccess($fileconfig['path'], TRUE);
 
   // Build SQL filename.
   $fileconfig['sql'] = $filename . '.sql';
@@ -488,16 +478,15 @@ function demo_enum_tables() {
   switch (db_driver()) {
     case 'mysql':
     case 'mysqli':
-      $result = db_query("SHOW TABLES");
+      $result = db_query('SHOW TABLES')->fetchCol();
       break;
 
     case 'pgsql':
-      $result = db_query("SELECT table_name FROM information_schema.tables WHERE table_schema = '%s'", 'public');
+      $result = db_query('SELECT table_name FROM information_schema.tables WHERE table_schema = :schema', array(':schema' => 'public'))->fetchCol();
       break;
   }
 
-  while ($table = db_fetch_array($result)) {
-    $table = reset($table);
+  foreach ($result as $table) {
     if (is_array($db_prefix)) {
       // Check if table name matches a configured prefix.
       if (preg_match($rx, $table, $matches)) {
@@ -534,8 +523,7 @@ function demo_autocomplete($string = '') {
       $matches[$file->name] = check_plain($file->name);
     }
   }
-  print drupal_to_js($matches);
-  exit();
+  drupal_json_output($matches);
 }
 
 /**

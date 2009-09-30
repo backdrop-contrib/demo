@@ -12,7 +12,7 @@ if (!defined('MYSQLI_BINARY_FLAG')) {
 function demo_dump_db($filename, $exclude = array()) {
   // Make sure we have permission to save our backup file.
   $directory = dirname($filename);
-  if (!file_check_directory($directory, FILE_CREATE_DIRECTORY)) {
+  if (!file_prepare_directory($directory, FILE_CREATE_DIRECTORY)) {
     return FALSE;
   }
 
@@ -52,8 +52,8 @@ function demo_dump_db($filename, $exclude = array()) {
  * Returns the name of the active database.
  */
 function _demo_get_database() {
-  $database = array_keys(db_fetch_array(db_query('SHOW TABLES')));
-  $database = preg_replace('/^Tables_in_/', '', $database[0]);
+  $database = array_keys(db_query('SHOW TABLES')->fetchAssoc());
+  $database = preg_replace('/^Tables_in_/i', '', $database[0]);
   return $database;
 }
 
@@ -66,7 +66,7 @@ function _demo_dump_table_structure($table) {
   $output .= "-- Table structure for table '$table'\n";
   $output .= "--\n\n";
 
-  $data = db_fetch_array(db_query("SHOW CREATE TABLE `$table`"));
+  $data = db_query("SHOW CREATE TABLE `$table`")->fetchAssoc();
   $output .= preg_replace(
     array('/^CREATE TABLE/', '/"/'),
     array('CREATE TABLE IF NOT EXISTS', '`'),
@@ -88,7 +88,7 @@ function _demo_dump_table_data($table) {
   $output .= "--\n\n";
 
   // Dump table data
-  $result = db_query("SELECT * FROM `$table`");
+  $result = db_query("SELECT * FROM `$table`", array(), array('fetch' => PDO::FETCH_ASSOC));
 
   // Get table fields.
   if ($fields = _demo_get_fields($result)) {
@@ -104,7 +104,7 @@ function _demo_dump_table_data($table) {
     $current_row = 0;
     $query_size = 0;
 
-    while ($row = db_fetch_array($result)) {
+    foreach ($result as $row) {
       $current_row++;
       $values = array();
       $field = 0;

@@ -6,6 +6,7 @@ Demo x.x-x.x, xxxx-xx-xx
 
 Demo 7.x-1.x, xxxx-xx-xx
 ------------------------
+by sun: Updated for new File API, Database API, Form API, and removed registry.
 #345866 by sun: Updated for removed $op in hook_block().
 #521474 by sun: Updated for admin/build renamed to admin/structure.
 by sun: Fixed length of form button captions on snapshot management form.
