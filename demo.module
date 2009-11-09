@@ -92,7 +92,7 @@ function demo_menu() {
  */
 function demo_block_list() {
   $blocks[0] = array('info' => t('Demo site reset'),
-    'status' => 1, 'region' => 'right', 'cache' => BLOCK_NO_CACHE,
+    'status' => 1, 'region' => 'right', 'cache' => DRUPAL_NO_CACHE,
   );
   return $blocks;
 }

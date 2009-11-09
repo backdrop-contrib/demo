@@ -50,12 +50,13 @@ function demo_admin_settings($form, &$form_state) {
     '#description' => t('Select how often this demonstration site is automatically reset. Ensure that you have chosen a snapshot for cron runs in <a href="!manage">Manage snapshots</a> first. <strong>Note:</strong> This requires cron to run at least within this interval.', array('!manage' => url('admin/structure/demo/manage'))),
   );
 
+  // @todo Use private file system and remove the warning.
   $form['dump']['path'] = array(
     '#type' => 'textfield',
     '#title' => t('Dump path'),
     '#default_value' => $fileconfig['path'],
     '#size' => 30,
-    '#description' => t('Enter a writable directory where dump files of this demonstration site are stored, f.e. %files. The name of this site (e.g. %confpath) is automatically appended to this directory, if required.<br /><br /><strong>Note: For security reasons you should store site dumps outside of the document root of your webspace!</strong>', array('%files' => file_directory_path() . '/demo', '%confpath' => $fileconfig['site'])),
+    '#description' => t('Enter a writable directory where dump files of this demonstration site are stored, f.e. %files. The name of this site (e.g. %confpath) is automatically appended to this directory, if required.<br /><br /><strong>Note: For security reasons you should store site dumps outside of the document root of your webspace!</strong>', array('%files' => file_directory_path('private') . '/demo', '%confpath' => $fileconfig['site'])),
   );
   $form[] = array(
     '#type' => 'submit',
