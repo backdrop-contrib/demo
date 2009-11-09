@@ -34,11 +34,13 @@ function demo_dump_db($filename, $options = array()) {
     fwrite($fp, $header);
 
     foreach ($options['tables'] as $table => $dump_options) {
-      if ($dump_options['schema']) {
-        _demo_dump_table_schema($fp, $table);
-      }
-      if ($dump_options['data']) {
-        _demo_dump_table_data($fp, $table);
+      if (!_demo_table_is_view($table)) {
+        if ($dump_options['schema']) {
+          _demo_dump_table_schema($fp, $table);
+        }
+        if ($dump_options['data']) {
+          _demo_dump_table_data($fp, $table);
+        }
       }
     }
 
@@ -223,5 +225,17 @@ function _demo_get_fields($result) {
   }
 
   return $fields;
+}
+
+/**
+ * Determine whether the given table is a VIEW.
+ */
+function _demo_table_is_view($table) {
+  static $tables = array();
+  if (!isset($tables[$table])) {
+    $status = db_query('SHOW TABLE STATUS LIKE :table', array(':table' => $table))->fetchAssoc();
+    $tables[$table] = (strtoupper(substr($status['Comment'], 0, 4)) == 'VIEW');
+  }
+  return $tables[$table];
 }
 

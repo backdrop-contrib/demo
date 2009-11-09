@@ -6,6 +6,7 @@ Demo x.x-x.x, xxxx-xx-xx
 
 Demo 7.x-1.x, xxxx-xx-xx
 ------------------------
+#505800 by smk-ka: Fixed SQL VIEWS are causing faulty dump.
 #535754 by smk-ka, sun: Added API functions/hooks to perform dumps and resets.
 by sun: Updated for renamed DRUPAL_NO_CACHE constant.
 #584988 by sun: Fixed paths in README.txt.
