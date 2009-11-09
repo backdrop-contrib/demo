@@ -17,38 +17,38 @@ Bug reports, feature suggestions and latest developments:
 
 -- REQUIREMENTS --
 
-* Cron, or alternatively Poormanscron (http://drupal.org/project/poormanscron).
+* Cron.
 
 
 -- INSTALLATION --
 
-* Copy the demo module to your modules directory and enable it on the Modules
-  page (admin/build/modules).
+* Copy the Demo module to your modules directory and enable it on the Modules
+  page (admin/structure/modules).
 
-* Optionally configure who is allowed to administer demo module, create dumps
-  and reset the site at the Access control page (admin/user/access).
+* Optionally configure who is allowed to administer Demo module, create dumps
+  and reset the site on the Permissions page (admin/config/people/permissions).
 
 
 -- CONFIGURATION --
 
 * Configure the path where dumps will be stored at the Dump settings
-  (admin/build/demo).
+  (admin/structure/demo).
 
 To configure automatic reset:
 
-* Go to Manage snapshots (admin/build/demo/manage) and select a snapshot
+* Go to Manage snapshots (admin/structure/demo/manage) and select a snapshot
   for cron.
 
-* Enable atomatic reset from Dump settings (admin/build/demo). Make sure you
+* Enable atomatic reset from Dump settings (admin/structure/demo). Make sure you
   have cron configured to run at least once within the entered time interval.
 
 
 -- USAGE --
 
-* Go to Create snapshot (admin/build/demo/dump) and create your first
+* Go to Create snapshot (admin/structure/demo/dump) and create your first
   snapshot.
 
-* After a while, reset your site (admin/build/demo/reset).
+* After a while, reset your site (admin/structure/demo/reset).
 
 
 -- CONTACT --
