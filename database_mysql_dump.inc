@@ -8,8 +8,13 @@ if (!defined('MYSQLI_BINARY_FLAG')) {
 
 /**
  * Dump active database.
+ *
+ * @param $filename
+ *   The filename including path to write the dump to.
+ * @param $options
+ *   An associative array of snapshot options, as described in demo_dump().
  */
-function demo_dump_db($filename, $exclude = array()) {
+function demo_dump_db($filename, $options = array()) {
   // Make sure we have permission to save our backup file.
   $directory = dirname($filename);
   if (!file_prepare_directory($directory, FILE_CREATE_DIRECTORY)) {
@@ -28,13 +33,12 @@ function demo_dump_db($filename, $exclude = array()) {
     $header .= "SET FOREIGN_KEY_CHECKS = 0;\n";
     fwrite($fp, $header);
 
-    foreach (demo_enum_tables() as $table) {
-      // Always export structure to allow creating a new site
-      // from a database dump
-      fwrite($fp, _demo_dump_table_structure($table));
-
-      if (!in_array($table, $exclude)) {
-        fwrite($fp, _demo_dump_table_data($table));
+    foreach ($options['tables'] as $table => $dump_options) {
+      if ($dump_options['schema']) {
+        _demo_dump_table_schema($fp, $table);
+      }
+      if ($dump_options['data']) {
+        _demo_dump_table_data($fp, $table);
       }
     }
 
@@ -58,9 +62,21 @@ function _demo_get_database() {
 }
 
 /**
- * Dump table structure.
+ * Enumerate database tables.
  */
-function _demo_dump_table_structure($table) {
+function _demo_enum_tables() {
+  return db_query('SHOW TABLES')->fetchCol();;
+}
+
+/**
+ * Dump table schema.
+ *
+ * @param $fp
+ *   The file handle of the output file.
+ * @param $table
+ *   A table name to export the schema for.
+ */
+function _demo_dump_table_schema($fp, $table) {
   $output = "\n";
   $output .= "--\n";
   $output .= "-- Table structure for table '$table'\n";
@@ -73,21 +89,26 @@ function _demo_dump_table_structure($table) {
     $data['create table']
   ) . ";\n";
 
-  return $output;
+  fwrite($fp, $output);
 }
 
 /**
  * Dump table data.
  *
  * This code has largely been stolen from the phpMyAdmin project.
+ *
+ * @param $fp
+ *   The file handle of the output file.
+ * @param $table
+ *   A table name to export the data for.
  */
-function _demo_dump_table_data($table) {
+function _demo_dump_table_data($fp, $table) {
   $output = "\n";
   $output .= "--\n";
   $output .= "-- Dumping data for table '$table'\n";
   $output .= "--\n\n";
 
-  // Dump table data
+  // Dump table data.
   $result = db_query("SELECT * FROM `$table`", array(), array('fetch' => PDO::FETCH_ASSOC));
 
   // Get table fields.
@@ -145,8 +166,12 @@ function _demo_dump_table_data($table) {
       }
       else {
         $insert_buffer = '(' . implode(', ', $values) . ')';
+
+        // Check if buffer size exceeds 50KB.
         if ($query_size + strlen($insert_buffer) > 50000) {
-          $output .= ";\n";
+          // Flush to disc and start new buffer.
+          fwrite($fp, $output . ";\n");
+          $output = '';
           $current_row = 1;
           $query_size = 0;
           $insert_buffer = $insert_cmd . $insert_buffer;
@@ -165,7 +190,7 @@ function _demo_dump_table_data($table) {
     $output .= "/*!40000 ALTER TABLE $table ENABLE KEYS */;\n";
   }
 
-  return $output;
+  fwrite($fp, $output);
 }
 
 /**

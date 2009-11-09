@@ -40,7 +40,7 @@ function demo_menu() {
   $items['admin/structure/demo/manage'] = array(
     'title' => 'Manage snapshots',
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('demo_manage'),
+    'page arguments' => array('demo_manage_form'),
     'access arguments' => $admin_access,
     'file' => 'demo.admin.inc',
     'type' => MENU_LOCAL_TASK,
@@ -49,7 +49,7 @@ function demo_menu() {
   $items['admin/structure/demo/dump'] = array(
     'title' => 'Create snapshot',
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('demo_dump'),
+    'page arguments' => array('demo_dump_form'),
     'access arguments' => $admin_access,
     'file' => 'demo.admin.inc',
     'type' => MENU_LOCAL_TASK,
@@ -141,7 +141,6 @@ function demo_cron() {
     if ((REQUEST_TIME - $interval) >= variable_get('demo_reset_last', 0)) {
       module_load_include('inc', 'demo', 'demo.admin');
       demo_reset(variable_get('demo_dump_cron', 'demo_site'), FALSE);
-      variable_set('demo_reset_last', REQUEST_TIME);
     }
   }
 }
