@@ -67,7 +67,7 @@ function _demo_get_database() {
  * Enumerate database tables.
  */
 function _demo_enum_tables() {
-  return db_query('SHOW TABLES')->fetchCol();;
+  return db_query('SHOW TABLES')->fetchCol();
 }
 
 /**
@@ -89,7 +89,18 @@ function _demo_dump_table_schema($fp, $table) {
     array('/^CREATE TABLE/', '/"/'),
     array('CREATE TABLE IF NOT EXISTS', '`'),
     $data['create table']
-  ) . ";\n";
+  );
+  $status = db_query('SHOW TABLE STATUS LIKE :table', array(':table' => $table))->fetchAssoc();
+  $output .= ' ENGINE=' . $status['engine'];
+  $output .= ' DEFAULT CHARSET=' . $status['collation'];
+  if (!empty($status['comment'])) {
+    $output .= " COMMENT='" . $status['comment'] . "'";
+  }
+  // @todo Depends on whether we dump data and table existence on import.
+//  if (!empty($status['auto_increment'])) {
+//    $output .= ' AUTO_INCREMENT=' . $status['auto_increment'];
+//  }
+  $output .= ";\n";
 
   fwrite($fp, $output);
 }
@@ -234,7 +245,7 @@ function _demo_table_is_view($table) {
   static $tables = array();
   if (!isset($tables[$table])) {
     $status = db_query('SHOW TABLE STATUS LIKE :table', array(':table' => $table))->fetchAssoc();
-    $tables[$table] = (strtoupper(substr($status['Comment'], 0, 4)) == 'VIEW');
+    $tables[$table] = (strtoupper(substr($status['comment'], 0, 4)) == 'VIEW');
   }
   return $tables[$table];
 }
