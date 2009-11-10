@@ -7,11 +7,16 @@
  */
 
 /**
+ * Implements hook_uninstall().
+ */
+function demo_uninstall() {
+  db_delete('variable')->condition('name', 'demo_%', 'LIKE')->execute();
+}
+
+/**
  * Move existing dumps to new directory without site name sub-folder.
  */
 function demo_update_6100() {
-  $ret = array();
-
   // If file_directory_path() contains the site name already or is
   // 'sites/all/files', create new folder without site name and move existing
   // files to the new location.
@@ -27,10 +32,7 @@ function demo_update_6100() {
       // Ignore any warnings from rmdir() about remaining files in the old
       // directory (they will NOT be deleted).
       @rmdir($old_path);
-      $ret[] = array('success' => TRUE, 'query' => strtr('Demo snapshot files have been successfully moved to <em>%path</em>.', array('%path' => $new_path)));
     }
   }
-
-  return $ret;
 }
 
