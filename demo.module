@@ -3,23 +3,23 @@
 
 /**
  * @file
- * Demonstration Site module
+ * Demonstration site API Drupal integration functions.
  */
 
 /**
- * Implementation of hook_perm().
+ * Implements hook_perm().
  */
 function demo_permission() {
   return array(
     'administer demo settings' => array(
-      'title' => t('Administer demonstration site settings'),
-      'description' => t('Administer reset interval, create new dumps and manually reset this site.'),
+      'title' => t('Administer demonstration site'),
+      'description' => t('Create new snapshots and manually reset this site.'),
     ),
   );
 }
 
 /**
- * Implementation of hook_menu().
+ * Implements hook_menu().
  */
 function demo_menu() {
   $admin_access = array('administer demo settings');
@@ -88,60 +88,35 @@ function demo_menu() {
 }
 
 /**
- * Implementation of hook_block_list().
+ * Create a new snapshot.
+ *
+ * @param $options
+ *   A structured array of snapshot options:
+ *   - filename: The base output filename, without extension.
+ *   - default: Whether to set this dump as new default snapshot.
+ *   - description: A description for the snapshot. If a snapshot with the same
+ *     name already exists and this is left blank, the new snapshot will reuse
+ *     the existing description.
+ *   - tables: An array of tables to dump, keyed by table name (including table
+ *     prefix, if any). The value is an array of dump options:
+ *     - schema: Whether to dump the table schema.
+ *     - data: Whether to dump the table data.
  */
-function demo_block_list() {
-  $blocks[0] = array('info' => t('Demo site reset'),
-    'status' => 1, 'region' => 'right', 'cache' => DRUPAL_NO_CACHE,
-  );
-  return $blocks;
-}
-
-/**
- * Implementation of hook_block_view().
- */
-function demo_block_view($delta = '') {
-  $block = array(
-    'subject' => t('Reset demo'),
-    'content' => drupal_get_form('demo_reset_now'),
-  );
-  return $block;
-}
-
-function demo_reset_now($form, &$form_state) {
-  $form['redirect'] = array(
-    '#type' => 'value',
-    '#value' => $_GET['q'],
-  );
-  $form['filename'] = array(
-    '#type' => 'value',
-    '#value' => variable_get('demo_dump_cron', 'demo_site'),
-  );
-  $form['snapshot'] = array(
-    '#value' => t('Active snapshot: !snapshot', array('!snapshot' => variable_get('demo_dump_cron', 'demo_site'))),
-  );
-  $form['reset-demo'] = array(
-    '#type' => 'submit',
-    '#value' => t('Reset now'),
-  );
-  return $form;
-}
-
-function demo_reset_now_submit($form, &$form_state) {
+function demo_dump($options) {
   module_load_include('inc', 'demo', 'demo.admin');
-  demo_reset_confirm_submit($form, $form_state);
+  return _demo_dump($options);
 }
 
 /**
- * Implementation of hook_cron().
+ * Reset site using snapshot.
+ *
+ * @param $filename
+ *   Base snapshot filename, without extension.
+ * @param $verbose
+ *   Whether to output status messages.
  */
-function demo_cron() {
-  if ($interval = variable_get('demo_reset_interval', 0)) {
-    // See if it's time for a reset.
-    if ((REQUEST_TIME - $interval) >= variable_get('demo_reset_last', 0)) {
-      module_load_include('inc', 'demo', 'demo.admin');
-      demo_reset(variable_get('demo_dump_cron', 'demo_site'), FALSE);
-    }
-  }
+function demo_reset($filename, $verbose = TRUE) {
+  module_load_include('inc', 'demo', 'demo.admin');
+  return _demo_reset($filename, $verbose);
 }
 

@@ -1,5 +1,5 @@
 ; $Id$
-name = Demo Site
+name = Demonstration site API
 description = Create snapshots and reset the site for demonstration or testing purposes.
 package = Development
 core = 7.x

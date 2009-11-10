@@ -6,6 +6,7 @@ Demo x.x-x.x, xxxx-xx-xx
 
 Demo 7.x-1.x, xxxx-xx-xx
 ------------------------
+#294879 by sun: Splitted module into API and demo_reset module.
 #375507 by sun: Added hook_uninstall().
 by sun: Fixed table engine, charset, and comment not contained in snapshot.
 #505800 by smk-ka: Fixed SQL VIEWS are causing faulty dump.

@@ -92,7 +92,8 @@ function _demo_dump_table_schema($fp, $table) {
   );
   $status = db_query('SHOW TABLE STATUS LIKE :table', array(':table' => $table))->fetchAssoc();
   $output .= ' ENGINE=' . $status['engine'];
-  $output .= ' DEFAULT CHARSET=' . $status['collation'];
+  // @todo Wrong value; contains 'utf8_general_ci' (collation), not 'utf8' (charset).
+  //$output .= ' DEFAULT CHARSET=' . $status['collation'];
   if (!empty($status['comment'])) {
     $output .= " COMMENT='" . $status['comment'] . "'";
   }

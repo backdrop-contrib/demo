@@ -10,7 +10,7 @@
  * Implements hook_uninstall().
  */
 function demo_uninstall() {
-  db_delete('variable')->condition('name', 'demo_%', 'LIKE')->execute();
+  variable_del('demo_reset_last');
 }
 
 /**
