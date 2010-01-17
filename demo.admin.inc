@@ -175,10 +175,13 @@ function _demo_dump($options) {
   if (!demo_dump_db($fileconfig['sqlfile'], $options)) {
     return FALSE;
   }
-  else {
-    // Allow other modules to act on successful dumps.
-    module_invoke_all('demo_dump', $options, $info, $fileconfig);
-  }
+
+  // Adjust file permissions.
+  drupal_chmod($fileconfig['infofile']);
+  drupal_chmod($fileconfig['sqlfile']);
+
+  // Allow other modules to act on successful dumps.
+  module_invoke_all('demo_dump', $options, $info, $fileconfig);
 
   return $fileconfig;
 }
@@ -390,7 +393,7 @@ function demo_get_dumps() {
     $option['#description'] .= '<p>' . t('Download: <a href="@info-file-url">.info file</a>, <a href="@sql-file-url">.sql file</a>', $targs) . '</p>';
     if (count($info['modules']) > 1) {
       // Remove required core modules and obvious modules from module list.
-      $info['modules'] = array_diff($info['modules'], array('filter', 'node', 'system', 'user', 'watchdog', 'demo'));
+      $info['modules'] = array_diff($info['modules'], array('filter', 'node', 'system', 'user', 'demo'));
       // Sort module list alphabetically.
       sort($info['modules']);
       $option['#description'] .= t('Modules: ') . implode(', ', $info['modules']);
