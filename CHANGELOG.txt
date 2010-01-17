@@ -31,6 +31,10 @@ by sun: Fixed coding-style.
 #393186 by sun: Fixed fatal error: Only variables can be passed by reference.
 #361301 by sun: Ported to 7.x.
 #372113 by sun: Fixed not all cache tables are skipped.
+
+
+Demo 6.x-1.2, 2009-02-06
+------------------------
 by smk-ka: Made watchdog messages translatable (fixed a potx warning).
 #369711 by smk-ka: Added confirmation before deleting a snapshot.
 #369642 by smk-ka: Added checkbox to define new snapshot as default.
