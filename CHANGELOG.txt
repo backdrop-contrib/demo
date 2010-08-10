@@ -6,6 +6,7 @@ Demo x.x-x.x, xxxx-xx-xx
 
 Demo 7.x-1.x, xxxx-xx-xx
 ------------------------
+#866700 by sun: Updated for $db_prefix.
 #688840 by sun: Fixed missing configure link on modules page.
 by sun: Fixed file permissions of new .info and .sql files.
 #294879 by sun: Splitted module into API and demo_reset module.

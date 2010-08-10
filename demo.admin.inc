@@ -170,6 +170,8 @@ function _demo_dump($options) {
   // Allow other modules to alter the dump options.
   $fileconfig = demo_get_fileconfig($info['filename']);
   drupal_alter('demo_dump', $options, $info, $fileconfig);
+  dsm($fileconfig);
+  exit;
 
   // Perform database dump.
   if (!demo_dump_db($fileconfig['sqlfile'], $options)) {
@@ -241,7 +243,7 @@ function _demo_reset($filename, $verbose = TRUE) {
 
   // Drop tables.
   $is_version_1_0_dump = version_compare($info['version'], '1.1', '<');
-  $watchdog = DatabaseConnection::prefixTables('{watchdog}');
+  $watchdog = Database::getConnection()->prefixTables('{watchdog}');
   foreach (demo_enum_tables() as $table => $dump_options) {
     // Skip watchdog, except for legacy dumps that included the watchdog table
     if ($table != $watchdog || $is_version_1_0_dump) {
@@ -483,8 +485,6 @@ function demo_set_info($values = NULL) {
  * there are multiple).
  */
 function demo_enum_tables() {
-  global $db_prefix;
-
   $tables = array();
 
   // Load database specific functions.
@@ -492,30 +492,33 @@ function demo_enum_tables() {
     return FALSE;
   }
 
+  $connection = Database::getConnection();
+  $db_options = $connection->getConnectionOptions();
+
   // Create a regex that matches the table prefix(es).
-  if (is_array($db_prefix)) {
-    $rx = '/^' . implode('|', array_filter($db_prefix)) . '/';
-  }
-  else if ($db_prefix != '') {
-    $rx = '/^' . $db_prefix . '/';
+  // We are only interested in non-empty table prefixes.
+  $prefixes = array();
+  if (!empty($db_options['prefix'])) {
+    if (is_array($db_options['prefix'])) {
+      $prefixes = array_filter($db_options['prefix']);
+    }
+    elseif ($db_options['prefix'] != '') {
+      $prefixes['default'] = $db_options['prefix'];
+    }
+    $rx = '/^' . implode('|', $prefixes) . '/';
   }
 
   // Query the database engine for the table list.
   $result = _demo_enum_tables();
   foreach ($result as $table) {
-    if (is_array($db_prefix)) {
+    if (!empty($prefixes)) {
       // Check if table name matches a configured prefix.
       if (preg_match($rx, $table, $matches)) {
         $table_prefix = $matches[0];
         $plain_table = substr($table, strlen($table_prefix));
-        if ($db_prefix[$plain_table] == $table_prefix || $db_prefix['default'] == $table_prefix) {
+        if ($prefixes[$plain_table] == $table_prefix || $prefixes['default'] == $table_prefix) {
           $tables[$table] = array('schema' => TRUE, 'data' => TRUE);
         }
-      }
-    }
-    else if ($db_prefix != '') {
-      if (preg_match($rx, $table)) {
-        $tables[$table] = array('schema' => TRUE, 'data' => TRUE);
       }
     }
     else {
@@ -546,7 +549,7 @@ function demo_enum_tables() {
     '{cache_views_data}',
     '{views_object_cache}',
   );
-  foreach (array_map(array('DatabaseConnection', 'prefixTables'), $excludes) as $table) {
+  foreach (array_map(array($connection, 'prefixTables'), $excludes) as $table) {
     if (isset($tables[$table])) {
       $tables[$table]['data'] = FALSE;
     }
