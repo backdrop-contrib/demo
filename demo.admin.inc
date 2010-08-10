@@ -170,8 +170,6 @@ function _demo_dump($options) {
   // Allow other modules to alter the dump options.
   $fileconfig = demo_get_fileconfig($info['filename']);
   drupal_alter('demo_dump', $options, $info, $fileconfig);
-  dsm($fileconfig);
-  exit;
 
   // Perform database dump.
   if (!demo_dump_db($fileconfig['sqlfile'], $options)) {
