@@ -6,6 +6,7 @@ Demo x.x-x.x, xxxx-xx-xx
 
 Demo 7.x-1.x, xxxx-xx-xx
 ------------------------
+#765186 by sun: Fixed collation not dumped for tables.
 by sun: Updated for new Drupal core cache tables.
 by sun: Added list of system variables to retain after reset.
 by sun: Added proper Drupal behavior for collapsible snapshots.
