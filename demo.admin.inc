@@ -367,7 +367,9 @@ function demo_get_dumps() {
     '#required' => TRUE,
     '#title' => t('Snapshot'),
   );
-  $options['filename']['#attached']['js'][] = drupal_get_path('module', 'demo') . '/demo.admin.js';
+
+  $options['#attributes']['class'][] = 'demo-snapshots-widget';
+  $options['#attached']['js'][] = drupal_get_path('module', 'demo') . '/demo.admin.js';
 
   foreach ($files as $filename => $file) {
     // Build basic file info
