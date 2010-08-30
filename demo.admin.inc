@@ -367,6 +367,8 @@ function demo_get_dumps() {
     '#required' => TRUE,
     '#title' => t('Snapshot'),
   );
+  $options['filename']['#attached']['js'][] = drupal_get_path('module', 'demo') . '/demo.admin.js';
+
   foreach ($files as $filename => $file) {
     // Build basic file info
     $files[$filename] = (array) $file;
@@ -381,7 +383,6 @@ function demo_get_dumps() {
       '#return_value' => $info['filename'],
       '#file' => $file,
       '#info' => $info,
-      '#attributes' => array('onclick' => "jQuery('.description', this.parentNode.parentNode).slideToggle();"),
     );
     if (!empty($info['description'])) {
       $option['#description'] .= '<p>' . $info['description'] . '</p>';
@@ -401,9 +402,6 @@ function demo_get_dumps() {
 
     $options[$info['filename']] = $option;
   }
-
-  // Attach stylesheet to initially hide descriptions
-  drupal_add_js("jQuery('div.form-item div.description', jQuery('form')).hide();", array('type' => 'inline', 'scope' => 'footer'));
 
   return $options;
 }
