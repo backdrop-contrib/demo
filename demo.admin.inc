@@ -239,6 +239,14 @@ function _demo_reset($filename, $verbose = TRUE) {
   $info = demo_get_info($fileconfig['infofile']);
   module_invoke_all('demo_reset_before', $filename, $info, $fileconfig);
 
+  // Retain special variables, so the (demonstration) site keeps operating after
+  // the reset. Specify NULL instead of default values, so unconfigured
+  // variables are not retained, resp., deleted after the reset.
+  $variables = array(
+    // Without the snapshot path, subsequent resets will not work.
+    'demo_dump_path' => variable_get('demo_dump_path', NULL),
+  );
+
   // Drop tables.
   $is_version_1_0_dump = version_compare($info['version'], '1.1', '<');
   $watchdog = Database::getConnection()->prefixTables('{watchdog}');
@@ -275,6 +283,16 @@ function _demo_reset($filename, $verbose = TRUE) {
     }
   }
   fclose($fp);
+
+  // Retain variables.
+  foreach ($variables as $key => $value) {
+    if (isset($value)) {
+      variable_set($key, $value);
+    }
+    else {
+      variable_del($key);
+    }
+  }
 
   if ($success) {
     if ($verbose) {

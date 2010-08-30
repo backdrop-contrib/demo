@@ -6,6 +6,7 @@ Demo x.x-x.x, xxxx-xx-xx
 
 Demo 7.x-1.x, xxxx-xx-xx
 ------------------------
+by sun: Added list of system variables to retain after reset.
 by sun: Added proper Drupal behavior for collapsible snapshots.
 #866700 by sun: Updated for $db_prefix.
 #688840 by sun: Fixed missing configure link on modules page.
