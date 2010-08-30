@@ -544,23 +544,26 @@ function demo_enum_tables() {
 
   // Apply default exclude list.
   $excludes = array(
-    // Core
+    // Drupal core.
     '{cache}',
+    '{cache_bootstrap}',
     '{cache_block}',
     '{cache_content}',
+    '{cache_field}',
     '{cache_filter}',
     '{cache_form}',
     '{cache_menu}',
     '{cache_page}',
+    '{cache_path}',
     '{cache_update}',
     '{watchdog}',
-    // CTools
+    // CTools.
     '{ctools_object_cache}',
-    // Drupal Administration Menu
+    // Administration menu.
     '{cache_admin_menu}',
-    // Panels
+    // Panels.
     '{panels_object_cache}',
-    // Views
+    // Views.
     '{cache_views}',
     '{cache_views_data}',
     '{views_object_cache}',
