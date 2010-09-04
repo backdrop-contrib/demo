@@ -11,31 +11,35 @@ by sun: Updated for new Drupal core cache tables.
 by sun: Added list of system variables to retain after reset.
 by sun: Added proper Drupal behavior for collapsible snapshots.
 #866700 by sun: Updated for $db_prefix.
-#688840 by sun: Fixed missing configure link on modules page.
+#688840 by sun: Updated for new configure link on modules page.
+by sun: Updated for renamed DRUPAL_NO_CACHE constant.
+#584988 by sun: Fixed paths in README.txt.
+by sun: Updated for new File API, Database API, Form API, and removed registry.
+#345866 by sun: Updated for removed $op in hook_block().
+#521474 by sun: Updated for admin/build renamed to admin/structure.
+#361301 by cwgordon7: Updated/Fixed reset functionality.
+by sun: Fixed PHP notices for non-existing key $meta->native_type.
+by sun: Updated for drupal_add_js().
+#361301 by sun: Ported to 7.x.
+
+
+Demo 6.x-1.x, xxxx-xx-xx
+------------------------
 by sun: Fixed file permissions of new .info and .sql files.
 #294879 by sun: Splitted module into API and demo_reset module.
 #375507 by sun: Added hook_uninstall().
 by sun: Fixed table engine, charset, and comment not contained in snapshot.
 #505800 by smk-ka: Fixed SQL VIEWS are causing faulty dump.
 #535754 by smk-ka, sun: Added API functions/hooks to perform dumps and resets.
-by sun: Updated for renamed DRUPAL_NO_CACHE constant.
-#584988 by sun: Fixed paths in README.txt.
-by sun: Updated for new File API, Database API, Form API, and removed registry.
-#345866 by sun: Updated for removed $op in hook_block().
-#521474 by sun: Updated for admin/build renamed to admin/structure.
 by sun: Fixed length of form button captions on snapshot management form.
 #370402 by sun: Added option to download snapshot files.
-#361301 by cwgordon7: Updated/Fixed reset functionality.
 #496620 by evoltech: Fixed paths in README.txt.
 by smk-ka: Added admin_menu cache table to exclude list.
 #489666 by stella: Added hook invocation after successful reset.
-by sun: Fixed PHP notices for non-existing key $meta->native_type.
-by sun: Updated for drupal_add_js().
 by sun: Fixed coding-style.
 #256714 by sun: Fixed site name sub-folder no longer appended.
 #256714 by smk-ka, sun: Removed site name sub-folder from dump directory path.
 #393186 by sun: Fixed fatal error: Only variables can be passed by reference.
-#361301 by sun: Ported to 7.x.
 #372113 by sun: Fixed not all cache tables are skipped.
 
 

@@ -128,6 +128,7 @@ function _demo_dump_table_schema($fp, $table) {
     }
   }
 
+  // Add IF NOT EXISTS to CREATE TABLE, replace double quotes with MySQL quotes.
   $output .= preg_replace(
     array('/^CREATE TABLE/', '/"/'),
     array('CREATE TABLE IF NOT EXISTS', '`'),
