@@ -6,6 +6,7 @@ Demo x.x-x.x, xxxx-xx-xx
 
 Demo 7.x-1.x, xxxx-xx-xx
 ------------------------
+#901954 by sun: Updated for removed file_directory_path().
 #765186 by sun: Fixed collation not dumped for tables.
 by sun: Updated for new Drupal core cache tables.
 by sun: Added list of system variables to retain after reset.

@@ -30,19 +30,24 @@ function demo_admin_settings($form, &$form_state) {
     '#markup' => t('<p><strong>Last reset:</strong> !date</p>', array('!date' => $reset_date)),
   );
 
-  $fileconfig = demo_get_fileconfig();
+  if (!file_stream_wrapper_valid_scheme('private')) {
+    form_set_error('', t('The <a href="@file-settings-url">private filesystem</a> must be configured in order to create or load snapshots.', array(
+      '@file-settings-url' => url('admin/config/media/file-system', array(
+        'query' => drupal_get_destination(),
+      )),
+    )));
+  }
 
   $form['dump'] = array(
     '#type' => 'fieldset',
     '#title' => t('Dump settings'),
   );
 
-  // @todo Use private file system and remove the warning.
   $form['dump']['demo_dump_path'] = array(
     '#type' => 'textfield',
     '#title' => t('Dump path'),
-    '#default_value' => $fileconfig['path'],
-    '#description' => t('Enter a writable directory where dump files of this demonstration site are stored, f.e. %files. The name of this site (e.g. %confpath) is automatically appended to this directory, if required.<br /><br /><strong>Note: For security reasons you should store site dumps outside of the document root of your webspace!</strong>', array('%files' => file_directory_path('private') . '/demo', '%confpath' => $fileconfig['site'])),
+    '#default_value' => variable_get('demo_dump_path', 'demo'),
+    '#required' => TRUE,
   );
   $form['#validate'][] = 'demo_admin_settings_validate';
 
@@ -323,14 +328,29 @@ function demo_get_fileconfig($filename = 'demo_site') {
   $fileconfig = array();
 
   // Build dump path.
-  $fileconfig['path'] = variable_get('demo_dump_path', file_directory_path('private') . '/demo');
+  if (!file_stream_wrapper_valid_scheme('private')) {
+    // @todo Temporarily throwing a form error here.
+    // Don't break demo_profile.
+    if (!defined('MAINTENANCE_MODE')) {
+      form_set_error('', t('The <a href="@file-settings-url">private filesystem</a> must be configured in order to create or load snapshots.', array(
+        '@file-settings-url' => url('admin/config/media/file-system', array(
+          'query' => drupal_get_destination(),
+        )),
+      )));
+    }
+    return FALSE;
+  }
+  $fileconfig['path'] = 'private://' . variable_get('demo_dump_path', 'demo');
   $fileconfig['dumppath'] = $fileconfig['path'];
+  // @todo Update to D7?
   // Append site name if it is not included in file_directory_path() and if not
   // storing files in sites/all/files.
   $fileconfig['site'] = str_replace('sites', '', conf_path());
+  /*
   if (strpos($fileconfig['path'], conf_path()) === FALSE && strpos($fileconfig['path'], '/all/') === FALSE) {
     $fileconfig['dumppath'] .= $fileconfig['site'];
   }
+  */
 
   // Check if directory exists.
   if (!file_prepare_directory($fileconfig['dumppath'], FILE_CREATE_DIRECTORY)) {
