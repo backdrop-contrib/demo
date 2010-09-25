@@ -12,8 +12,8 @@
 function demo_permission() {
   return array(
     'administer demo settings' => array(
-      'title' => t('Administer demonstration site'),
-      'description' => t('Create new snapshots and manually reset this site.'),
+      'title' => t('Create snapshots and reset the site'),
+      'restrict access' => TRUE,
     ),
   );
 }
@@ -25,26 +25,17 @@ function demo_menu() {
   $admin_access = array('administer demo settings');
 
   $items['admin/structure/demo'] = array(
-    'title' => 'Demonstration site',
-    'description' => 'Administer reset interval, create new dumps and manually reset this site.',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('demo_admin_settings'),
-    'access arguments' => $admin_access,
-    'file' => 'demo.admin.inc',
-  );
-  $items['admin/structure/demo/maintenance'] = array(
-    'title' => 'Status',
-    'type' => MENU_DEFAULT_LOCAL_TASK,
-    'weight' => 0,
-  );
-  $items['admin/structure/demo/manage'] = array(
-    'title' => 'Manage snapshots',
+    'title' => 'Snapshots',
+    'description' => 'Create snapshots and reset the site.',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('demo_manage_form'),
     'access arguments' => $admin_access,
     'file' => 'demo.admin.inc',
-    'type' => MENU_LOCAL_TASK,
-    'weight' => 1,
+  );
+  $items['admin/structure/demo/list'] = array(
+    'title' => 'List',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => -10,
   );
   $items['admin/structure/demo/dump'] = array(
     'title' => 'Create snapshot',
@@ -52,11 +43,10 @@ function demo_menu() {
     'page arguments' => array('demo_dump_form'),
     'access arguments' => $admin_access,
     'file' => 'demo.admin.inc',
-    'type' => MENU_LOCAL_TASK,
-    'weight' => 2,
+    'type' => MENU_LOCAL_ACTION,
   );
   $items['admin/structure/demo/reset'] = array(
-    'title' => 'Reset site',
+    'title' => 'Reset',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('demo_reset_confirm'),
     'access arguments' => $admin_access,
@@ -70,8 +60,18 @@ function demo_menu() {
     'page arguments' => array('demo_delete_confirm', 4),
     'access arguments' => $admin_access,
     'file' => 'demo.admin.inc',
-    'type' => MENU_CALLBACK,
+    'type' => MENU_VISIBLE_IN_BREADCRUMB,
   );
+  $items['admin/structure/demo/settings'] = array(
+    'title' => 'Settings',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('demo_admin_settings'),
+    'access arguments' => $admin_access,
+    'file' => 'demo.admin.inc',
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 10,
+  );
+
   $items['demo/autocomplete'] = array(
     'page callback' => 'demo_autocomplete',
     'access arguments' => $admin_access,

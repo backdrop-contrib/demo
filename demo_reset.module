@@ -9,11 +9,10 @@
  * Use at your own risk.
  */
 
+/**
+ * Implements hook_form_FORMID_alter().
+ */
 function demo_reset_form_demo_admin_settings_alter(&$form, &$form_state) {
-  $form['status'][] = array(
-    '#markup' => t('<p><strong>Default snapshot:</strong> @snapshot</p>', array('@snapshot' => variable_get('demo_dump_cron', t('None')))),
-  );
-
   $intervals = array(
     // 0, 5, 10, 15, 30 minutes
     0, 300, 600, 900, 1800,
@@ -27,17 +26,30 @@ function demo_reset_form_demo_admin_settings_alter(&$form, &$form_state) {
     86400 * 30, 86400 * 90,
   );
   $intervals = drupal_map_assoc($intervals, 'format_interval');
-  $intervals[0] = t('Disabled');
-  $form['dump']['demo_reset_interval'] = array(
+  $form['demo_reset_interval'] = array(
     '#type' => 'select',
-    '#title' => t('Automatically reset site every'),
+    '#title' => t('Automatic reset interval'),
+    '#required' => FALSE,
     '#default_value' => variable_get('demo_reset_interval', 0),
     '#options' => $intervals,
-    '#description' => t('Select how often this demonstration site is automatically reset. Ensure that you have chosen a snapshot for cron runs in <a href="!manage">Manage snapshots</a> first. <strong>Note:</strong> This requires cron to run at least within this interval.', array('!manage' => url('admin/structure/demo/manage'))),
+    '#empty_value' => 0,
+    '#description' => t('Requires a <a href="@snapshots-url">default snapshot</a> and <a href="@cron-url">cron</a> to run in the configured interval.', array(
+      '@snapshots-url' => url('admin/structure/demo'),
+      '@cron-url' => url('admin/config/system/cron'),
+    )),
   );
 }
 
+/**
+ * Implements hook_form_FORMID_alter().
+ */
 function demo_reset_form_demo_manage_form_alter(&$form, &$form_state) {
+  $form['status']['demo_reset_default'] = array(
+    '#type' => 'item',
+    '#title' => t('Default snapshot'),
+    '#markup' => check_plain(variable_get('demo_dump_cron', t('- None -'))),
+  );
+
   $demo_dump_cron = variable_get('demo_dump_cron', 'demo_site');
   foreach ($form['dump'] as $name => $option) {
     if ($name == $demo_dump_cron) {
@@ -45,7 +57,7 @@ function demo_reset_form_demo_manage_form_alter(&$form, &$form_state) {
       break;
     }
   }
-  $form['cron'] = array(
+  $form['actions']['cron'] = array(
     '#type' => 'submit',
     '#value' => t('Use for cron runs'),
     '#submit' => array('demo_reset_demo_manage_form_submit'),
@@ -67,12 +79,12 @@ function demo_reset_demo_manage_form_submit($form, &$form_state) {
  */
 function demo_reset_set_default($filename) {
   variable_set('demo_dump_cron', $filename);
-  drupal_set_message(t('Snapshot %title will be used for upcoming cron runs.', array('%title' => $filename)));
+  drupal_set_message(t('Snapshot %title will be used for cron runs.', array('%title' => $filename)));
 }
 
 function demo_reset_form_demo_dump_form_alter(&$form, &$form_state) {
   $form['dump']['default'] = array(
-    '#title' => t('Set as new default snapshot'),
+    '#title' => t('Use as default snapshot for cron runs'),
     '#type' => 'checkbox',
   );
 }
@@ -114,6 +126,9 @@ function demo_reset_block_info() {
  * Implements hook_block_view().
  */
 function demo_reset_block_view($delta = '') {
+  if (!variable_get('demo_dump_cron', '')) {
+    return array();
+  }
   $block = array(
     'subject' => t('Reset demo'),
     'content' => drupal_get_form('demo_reset_block_form'),
@@ -131,7 +146,7 @@ function demo_reset_block_form($form, &$form_state) {
     '#type' => 'value',
     '#value' => $_GET['q'],
   );
-  $filename = variable_get('demo_dump_cron', 'demo_site');
+  $filename = variable_get('demo_dump_cron', '');
   $form['filename'] = array(
     '#type' => 'value',
     '#value' => $filename,

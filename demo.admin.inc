@@ -15,21 +15,6 @@ define('DEMO_DUMP_VERSION', '1.1');
  * Form builder for Demo module settings.
  */
 function demo_admin_settings($form, &$form_state) {
-  $form['status'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Status'),
-    '#collapsible' => FALSE,
-  );
-  if (variable_get('demo_reset_last', 0)) {
-    $reset_date = format_date(variable_get('demo_reset_last', 0));
-  }
-  else {
-    $reset_date = t('Never');
-  }
-  $form['status'][] = array(
-    '#markup' => t('<p><strong>Last reset:</strong> !date</p>', array('!date' => $reset_date)),
-  );
-
   if (!file_stream_wrapper_valid_scheme('private')) {
     form_set_error('', t('The <a href="@file-settings-url">private filesystem</a> must be configured in order to create or load snapshots.', array(
       '@file-settings-url' => url('admin/config/media/file-system', array(
@@ -38,14 +23,10 @@ function demo_admin_settings($form, &$form_state) {
     )));
   }
 
-  $form['dump'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Dump settings'),
-  );
-
-  $form['dump']['demo_dump_path'] = array(
+  $form['demo_dump_path'] = array(
     '#type' => 'textfield',
-    '#title' => t('Dump path'),
+    '#title' => t('Snapshot file system path'),
+    '#field_prefix' => 'private://',
     '#default_value' => variable_get('demo_dump_path', 'demo'),
     '#required' => TRUE,
   );
@@ -67,12 +48,27 @@ function demo_admin_settings_validate($form, &$form_state) {
  * Form builder to manage snapshots.
  */
 function demo_manage_form($form, &$form_state) {
-  $form['dump'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Available snapshots'),
+  $form['status'] = array(
+    '#type' => 'container',
+    '#title' => t('Status'),
+    '#attributes' => array(
+      'class' => array('demo-status', 'clearfix'),
+    ),
+    '#attached' => array(
+      'css' => array(drupal_get_path('module', 'demo') . '/demo.admin.css'),
+    ),
   );
-  $form['dump'] += demo_get_dumps();
-  $form['delete'] = array(
+  $reset_date = variable_get('demo_reset_last', 0);
+  $form['status']['reset_last'] = array(
+    '#type' => 'item',
+    '#title' => t('Last reset'),
+    '#markup' => $reset_date ? format_date($reset_date) : t('Never'),
+  );
+
+  $form['dump'] = demo_get_dumps();
+
+  $form['actions'] = array('#type' => 'actions');
+  $form['actions']['delete'] = array(
     '#type' => 'submit',
     '#value' => t('Delete'),
     '#submit' => array('demo_manage_delete_submit'),
@@ -100,7 +96,7 @@ function demo_delete_confirm($form, &$form_state, $filename) {
     '#type' => 'value',
     '#value' => $filename,
   );
-  return confirm_form($form, t('Are you sure you want to delete the snapshot %title?', array('%title' => $filename)), 'admin/structure/demo/manage', t('This action cannot be undone.'), t('Delete'));
+  return confirm_form($form, t('Are you sure you want to delete the snapshot %title?', array('%title' => $filename)), 'admin/structure/demo', t('This action cannot be undone.'), t('Delete'));
 }
 
 /**
@@ -110,41 +106,79 @@ function demo_delete_confirm_submit($form, &$form_state) {
   $files = demo_get_fileconfig($form_state['values']['filename']);
   unlink($files['sqlfile']);
   unlink($files['infofile']);
-  drupal_set_message(t('Snapshot %title has been deleted.', array('%title' => $form_state['values']['filename'])));
-  $form_state['redirect'] = 'admin/structure/demo/manage';
+  drupal_set_message(t('Snapshot %title has been deleted.', array(
+    '%title' => $form_state['values']['filename'],
+  )));
+  $form_state['redirect'] = 'admin/structure/demo';
 }
 
 /**
  * Form builder to create a new snapshot.
  */
 function demo_dump_form($form, &$form_state) {
+  $form['#tree'] = TRUE;
+
   $form['dump']['filename'] = array(
-    '#title' => t('File name'),
+    '#title' => t('Name'),
     '#type' => 'textfield',
     '#autocomplete_path' => 'demo/autocomplete',
     '#required' => TRUE,
     '#maxlength' => 128,
-    '#description' => t('Enter the snapshot file name without file extension. Allowed characters are a-z, 0-9, dashes ("-"), underscores ("_") and dots.'),
+    '#description' => t('Allowed characters: a-z, 0-9, dashes ("-"), underscores ("_") and dots.'),
   );
   $form['dump']['description'] = array(
     '#title' => t('Description'),
     '#type' => 'textarea',
     '#rows' => 2,
-    '#description' => t('Optionally enter a description for this snapshot here. If no description is given and a snapshot with the same filename already exists, the previous description is used.'),
+    '#description' => t('Leave empty to retain the existing description when replacing a snapshot.'),
   );
-  $form['dump']['tables'] = array('#type' => 'value', '#value' => demo_enum_tables());
+  $form['dump']['tables'] = array(
+    '#type' => 'value',
+    '#value' => demo_enum_tables(),
+  );
 
-  return confirm_form($form, t('Are you sure you want to create a new snapshot?'), 'admin/structure/demo', t('If the above filename already exists, creating a new snapshot will overwrite the existing snapshot. This action cannot be undone.'), t('Create'), t('Cancel'));
+  if (empty($form_state['demo']['dump_exists'])) {
+    $form['actions'] = array('#type' => 'actions');
+    $form['actions']['submit'] = array(
+      '#type' => 'submit',
+      '#value' => t('Create'),
+    );
+  }
+  else {
+    $form = confirm_form($form,
+      t('Are you sure you want to replace the existing %name snapshot?', array(
+        '%name' => $form_state['values']['dump']['filename'],
+      )),
+      'admin/structure/demo',
+      t('A snapshot with the same name already exists and will be replaced. This action cannot be undone.')
+    );
+  }
+  return $form;
+}
+
+/**
+ * Form validation handler for demo_dump_form().
+ */
+function demo_dump_form_validate(&$form, &$form_state) {
+  if (empty($form_state['values']['confirm'])) {
+    $fileconfig = demo_get_fileconfig($form_state['values']['dump']['filename']);
+    if (file_exists($fileconfig['infofile']) || file_exists($fileconfig['sqlfile'])) {
+      $form_state['demo']['dump_exists'] = TRUE;
+      $form_state['rebuild'] = TRUE;
+    }
+  }
 }
 
 /**
  * Form submit handler for demo_dump_form().
  */
 function demo_dump_form_submit($form, &$form_state) {
-  if ($fileconfig = _demo_dump($form_state['values'])) {
-    drupal_set_message(t('Successfully created snapshot %filename.', array('%filename' => $fileconfig['sqlfile'])));
+  if ($fileconfig = _demo_dump($form_state['values']['dump'])) {
+    drupal_set_message(t('Snapshot %filename has been created.', array(
+      '%filename' => $form_state['values']['dump']['filename'],
+    )));
   }
-  $form_state['redirect'] = 'admin/structure/demo/manage';
+  $form_state['redirect'] = 'admin/structure/demo';
 }
 
 /**
@@ -163,6 +197,11 @@ function demo_dump_form_submit($form, &$form_state) {
  *     - data: Whether to dump the table data.
  */
 function _demo_dump($options) {
+  // Load database specific functions.
+  if (!demo_load_include()) {
+    return FALSE;
+  }
+
   // Increase PHP's max_execution_time for large dumps.
   drupal_set_time_limit(600);
 
@@ -195,13 +234,24 @@ function _demo_dump($options) {
  * Form builder to reset site to a snapshot.
  */
 function demo_reset_confirm($form, &$form_state) {
-  $form['dump'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Available snapshots'),
-  );
-  $form['dump'] += demo_get_dumps();
+  $form['dump'] = demo_get_dumps();
 
-  return confirm_form($form, t('Are you sure you want to reset the site?'), 'admin/structure/demo', t('Resetting the site will overwrite all changes that have been made to this Drupal installation since the chosen snapshot.<br /><br /><div style="color: red; font-weight: bold; font-size: 18px;"><center>THIS ACTION CANNOT BE UNDONE!</center><br /></div>'), t('Reset'), t('Cancel'));
+  $form['warning'] = array(
+    '#type' => 'container',
+    '#attributes' => array(
+      'class' => array('messages', 'warning'),
+    ),
+  );
+  $form['warning']['message'] = array(
+    '#markup' => t('This action cannot be undone.'),
+  );
+
+  return confirm_form($form,
+    t('Are you sure you want to reset the site?'),
+    'admin/structure/demo',
+    t('Overwrites all changes that made to this site since the chosen snapshot.'),
+    t('Reset')
+  );
 }
 
 /**
@@ -211,7 +261,9 @@ function demo_reset_confirm_submit($form, &$form_state) {
   // Reset site to chosen snapshot.
   _demo_reset($form_state['values']['filename']);
 
-  $form_state['redirect'] = 'admin/structure/demo';
+  // Do not redirect from the reset confirmation form by default, as it is
+  // likely that the user wants to reset all over again (e.g., keeping the
+  // browser tab open).
 }
 
 /**
@@ -234,9 +286,11 @@ function _demo_reset($filename, $verbose = TRUE) {
   $fileconfig = demo_get_fileconfig($filename);
   if (!file_exists($fileconfig['sqlfile']) || !($fp = fopen($fileconfig['sqlfile'], 'r'))) {
     if ($verbose) {
-      drupal_set_message(t('Unable to open dump file %filename.', array('%filename' => $fileconfig['sqlfile'])), 'error');
+      drupal_set_message(t('Unable to read file %filename.', array(
+        '%filename' => $fileconfig['sqlfile'],
+      )), 'error');
     }
-    watchdog('demo', 'Unable to open dump file %filename.', array('%filename' => $fileconfig['sqlfile']), WATCHDOG_ERROR);
+    watchdog('demo', 'Unable to read file %filename.', array('%filename' => $fileconfig['sqlfile']), WATCHDOG_ERROR);
     return FALSE;
   }
 
@@ -301,18 +355,18 @@ function _demo_reset($filename, $verbose = TRUE) {
 
   if ($success) {
     if ($verbose) {
-      drupal_set_message(t('Successfully restored database from %filename.', array('%filename' => $fileconfig['sqlfile'])));
+      drupal_set_message(t('Restored site from %filename.', array('%filename' => $fileconfig['sqlfile'])));
     }
-    watchdog('demo', 'Successfully restored database from %filename.', array('%filename' => $fileconfig['sqlfile']), WATCHDOG_NOTICE);
+    watchdog('demo', 'Restored site from %filename.', array('%filename' => $fileconfig['sqlfile']), WATCHDOG_NOTICE);
 
     // Allow other modules to act on successful resets.
     module_invoke_all('demo_reset', $filename, $info, $fileconfig);
   }
   else {
     if ($verbose) {
-      drupal_set_message(t('Failed restoring database from %filename.', array('%filename' => $fileconfig['sqlfile'])), 'error');
+      drupal_set_message(t('Failed to restore site from %filename.', array('%filename' => $fileconfig['sqlfile'])), 'error');
     }
-    watchdog('demo', 'Failed restoring database from %filename.', array('%filename' => $fileconfig['sqlfile']), WATCHDOG_ERROR);
+    watchdog('demo', 'Failed to restore site from %filename.', array('%filename' => $fileconfig['sqlfile']), WATCHDOG_ERROR);
   }
 
   // Save request time of last reset, but not during re-installation via
@@ -377,7 +431,7 @@ function demo_get_fileconfig($filename = 'demo_site') {
 function demo_load_include() {
   $engine = db_driver();
   if (!module_load_include('inc', 'demo', 'database_' . $engine . '_dump')) {
-    drupal_set_message(t('@engine support not implemented yet.', array('@engine' => ucfirst($engine))), 'error');
+    drupal_set_message(t('@database is not supported yet.', array('@database' => ucfirst($engine))), 'error');
     return FALSE;
   }
   return TRUE;
@@ -394,56 +448,69 @@ function demo_get_dumps() {
     $files[$file]->filesize = filesize(substr($file, 0, -4) . 'sql');
   }
 
-  // Sort snapshots by date (ascending file modification time)
+  // Sort snapshots by date (ascending file modification time).
   uasort($files, create_function('$a, $b', 'return ($a->filemtime < $b->filemtime);'));
 
-  $options = array();
-  // Forms API does not pass selected value of individual radio buttons,
-  // so we manually insert an internal form value here.
-  $options['filename'] = array(
-    '#type' => 'value',
-    '#required' => TRUE,
+  $element = array(
+    '#type' => 'radios',
     '#title' => t('Snapshot'),
+    '#required' => TRUE,
+    '#parents' => array('filename'),
+    '#attributes' => array(
+      'class' => array('demo-snapshots-widget'),
+    ),
+    '#attached' => array(
+      'js' => array(drupal_get_path('module', 'demo') . '/demo.admin.js'),
+    ),
   );
 
-  $options['#attributes']['class'][] = 'demo-snapshots-widget';
-  $options['#attached']['js'][] = drupal_get_path('module', 'demo') . '/demo.admin.js';
-
   foreach ($files as $filename => $file) {
-    // Build basic file info
-    $files[$filename] = (array) $file;
     $info = demo_get_info($filename);
 
-    // Convert file info for Forms API
-    $option = array(
+    // Prepare snapshot title.
+    $title = t('@snapshot <small>(!date, !size)</small>', array(
+      '@snapshot' => $info['filename'],
+      '!date' => format_date($file->filemtime, 'small'),
+      '!size' => format_size($file->filesize),
+    ));
+
+    // Prepare snapshot description.
+    $description = '';
+    if (!empty($info['description'])) {
+      $description .= '<p>' . $info['description'] . '</p>';
+    }
+    // Add download links.
+    $description .= '<p>' . t('Download: <a href="@info-file-url">.info file</a>, <a href="@sql-file-url">.sql file</a>', array(
+      '@info-file-url' => url('demo/download/' . $file->name . '/info'),
+      '@sql-file-url' => url('demo/download/' . $file->name . '/sql'),
+    )) . '</p>';
+    // Add module list.
+    if (count($info['modules']) > 1) {
+      // Remove required core modules and Demo from module list.
+      $modules = array_diff($info['modules'], array('filter', 'node', 'system', 'user', 'demo'));
+      // Sort module list alphabetically.
+      sort($modules);
+      $description .= t('Modules: @modules', array('@modules' => implode(', ', $modules)));
+    }
+
+    // Add the radio option element.
+    // @see form_process_radios()
+    // @see http://drupal.org/node/915936
+    $element['#options'][$info['filename']] = $title;
+    $parents_for_id = array_merge($element['#parents'], array($info['filename']));
+    $element[$info['filename']] = array(
       '#type' => 'radio',
-      '#name' => 'filename',
-      '#title' => check_plain($info['filename']) . ' (' . format_date($file->filemtime, 'small') . ', ' . format_size($file->filesize) . ')',
-      '#description' => '',
-      '#return_value' => $info['filename'],
+      '#title' => $title,
+      '#description' => $description,
+      '#return_value' => check_plain($info['filename']),
+      '#parents' => $element['#parents'],
+      '#id' => drupal_html_id('edit-' . implode('-', $parents_for_id)),
       '#file' => $file,
       '#info' => $info,
     );
-    if (!empty($info['description'])) {
-      $option['#description'] .= '<p>' . $info['description'] . '</p>';
-    }
-    $targs = array(
-      '@info-file-url' => url('demo/download/' . $file->name . '/info'),
-      '@sql-file-url' => url('demo/download/' . $file->name . '/sql'),
-    );
-    $option['#description'] .= '<p>' . t('Download: <a href="@info-file-url">.info file</a>, <a href="@sql-file-url">.sql file</a>', $targs) . '</p>';
-    if (count($info['modules']) > 1) {
-      // Remove required core modules and obvious modules from module list.
-      $info['modules'] = array_diff($info['modules'], array('filter', 'node', 'system', 'user', 'demo'));
-      // Sort module list alphabetically.
-      sort($info['modules']);
-      $option['#description'] .= t('Modules: ') . implode(', ', $info['modules']);
-    }
-
-    $options[$info['filename']] = $option;
   }
 
-  return $options;
+  return $element;
 }
 
 function demo_get_info($filename, $field = NULL) {
@@ -476,7 +543,7 @@ function demo_set_info($values = NULL) {
   if (isset($values['filename']) && is_array($values)) {
     // Check for valid filename
     if (!preg_match('/^[-_\.a-zA-Z0-9]+$/', $values['filename'])) {
-      drupal_set_message(t('Dump filename %title must contain alphanumeric characters, dots, dashes and underscores only. Other characters, including blanks (spaces), are not allowed.', array('%title' => $values['filename'])), 'error');
+      drupal_set_message(t('Invalid filename. It must only contain alphanumeric characters, dots, dashes and underscores. Other characters, including spaces, are not allowed.'), 'error');
       return FALSE;
     }
 
