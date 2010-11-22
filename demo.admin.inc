@@ -73,6 +73,13 @@ function demo_manage_form($form, &$form_state) {
     '#value' => t('Delete'),
     '#submit' => array('demo_manage_delete_submit'),
   );
+
+  // If there are no snapshots yet, hide the selection and form actions.
+  if (empty($form['dump']['#options'])) {
+    $form['dump']['#access'] = FALSE;
+    $form['actions']['#access'] = FALSE;
+  }
+
   return $form;
 }
 
@@ -456,6 +463,7 @@ function demo_get_dumps() {
     '#title' => t('Snapshot'),
     '#required' => TRUE,
     '#parents' => array('filename'),
+    '#options' => array(),
     '#attributes' => array(
       'class' => array('demo-snapshots-widget'),
     ),
@@ -494,17 +502,9 @@ function demo_get_dumps() {
     }
 
     // Add the radio option element.
-    // @see form_process_radios()
-    // @see http://drupal.org/node/915936
     $element['#options'][$info['filename']] = $title;
-    $parents_for_id = array_merge($element['#parents'], array($info['filename']));
     $element[$info['filename']] = array(
-      '#type' => 'radio',
-      '#title' => $title,
       '#description' => $description,
-      '#return_value' => check_plain($info['filename']),
-      '#parents' => $element['#parents'],
-      '#id' => drupal_html_id('edit-' . implode('-', $parents_for_id)),
       '#file' => $file,
       '#info' => $info,
     );
