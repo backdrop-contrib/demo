@@ -9,7 +9,6 @@ Demo 7.x-1.x, xxxx-xx-xx
 #915936 by sun: Updated for easier radios/checkboxes options.
 #759584 by sun: Revamped administration pages.
 #901954 by sun: Updated for removed file_directory_path().
-#765186 by sun: Fixed collation not dumped for tables.
 by sun: Updated for new Drupal core cache tables.
 by sun: Added list of system variables to retain after reset.
 by sun: Added proper Drupal behavior for collapsible snapshots.
@@ -28,6 +27,8 @@ by sun: Updated for drupal_add_js().
 
 Demo 6.x-1.x, xxxx-xx-xx
 ------------------------
+#312215 by sethfisher, sun: Fixed foreign key checks prevent dropping of tables.
+#765186 by sun: Fixed collation not dumped for tables.
 by sun: Fixed file permissions of new .info and .sql files.
 #294879 by sun: Splitted module into API and demo_reset module.
 #375507 by sun: Added hook_uninstall().
