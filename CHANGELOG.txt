@@ -1,10 +1,10 @@
 // $Id$
 
-Demo x.x-x.x, xxxx-xx-xx
+Demo 7.x-1.x, xxxx-xx-xx
 ------------------------
 
 
-Demo 7.x-1.x, xxxx-xx-xx
+Demo 7.x-1.0, 2010-01-09
 ------------------------
 #915936 by sun: Updated for easier radios/checkboxes options.
 #759584 by sun: Revamped administration pages.
