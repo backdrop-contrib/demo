@@ -1,4 +1,3 @@
-; $Id$
 name = Demonstration site reset
 description = "Allows to reset the site on cron runs and to <strong>reset the site WITHOUT CONFIRMATION.</strong> Only supposed to be used on public demonstration sites. Use at your own risk."
 package = Development
