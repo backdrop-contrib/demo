@@ -117,14 +117,15 @@ function _demo_dump_table_schema($fp, $table) {
   $data = db_query("SHOW CREATE TABLE `$table`")->fetchAssoc();
   $status = db_query('SHOW TABLE STATUS LIKE :table', array(':table' => $table))->fetchAssoc();
 
-  // Column keys in $status start with a lower-case letter in PDO and with a
-  // upper-case letter otherwise. We convert all to lower-case.
+  // Capitalization of keys depends on PDO database connection options.
+  // Convert them to lowercase.
+  foreach ($data as $key => $value) {
+    unset($data[$key]);
+    $data[strtolower($key)] = $value;
+  }
   foreach ($status as $key => $value) {
-    $key_lower = strtolower($key);
-    if ($key[0] != $key_lower[0]) {
-      $status[$key_lower] = $value;
-      unset($status[$key]);
-    }
+    unset($status[$key]);
+    $status[strtolower($key)] = $value;
   }
 
   // Add IF NOT EXISTS to CREATE TABLE, replace double quotes with MySQL quotes.
@@ -331,7 +332,7 @@ function _demo_table_is_view($table) {
   static $tables = array();
   if (!isset($tables[$table])) {
     $status = db_query('SHOW TABLE STATUS LIKE :table', array(':table' => $table))->fetchAssoc();
-    $tables[$table] = (strtoupper(substr($status['comment'], 0, 4)) == 'VIEW');
+    $tables[$table] = (strtoupper(substr($status['Comment'], 0, 4)) == 'VIEW');
   }
   return $tables[$table];
 }
