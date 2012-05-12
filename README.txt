@@ -14,11 +14,6 @@ Bug reports, feature suggestions and latest developments:
   http://drupal.org/project/issues/demo
 
 
--- REQUIREMENTS --
-
-* Cron.
-
-
 -- INSTALLATION --
 
 * Copy the Demo module to your modules directory and enable it on the Modules
