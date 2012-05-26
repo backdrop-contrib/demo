@@ -332,7 +332,9 @@ function _demo_table_is_view($table) {
   static $tables = array();
   if (!isset($tables[$table])) {
     $status = db_query('SHOW TABLE STATUS LIKE :table', array(':table' => $table))->fetchAssoc();
-    $tables[$table] = (strtoupper(substr($status['Comment'], 0, 4)) == 'VIEW');
+    // Capitalization of keys depends on PDO database connection options.
+    $comment = (isset($status['Comment']) ? $status['Comment'] : $status['comment']);
+    $tables[$table] = (strtoupper(substr($comment, 0, 4)) == 'VIEW');
   }
   return $tables[$table];
 }
