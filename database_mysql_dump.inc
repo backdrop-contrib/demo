@@ -165,9 +165,9 @@ function _demo_dump_table_schema($fp, $table) {
       $collate = 'COLLATE=' . $status['collation'];
     }
     // If there is a character set defined already, just append the collation.
-    if (strpos($output, 'CHARSET') || strpos($output, 'CHARACTER SET')) {
-      // @todo This may also hit column definitions instead of the table
-      //   definition only. Should technically also be case-insensitive.
+    // Only look for the table definition (on the last line); column definitions
+    // may use a special collation, which must not be changed.
+    if (preg_match('@^\).+(?:CHARSET|CHARACTER SET)@m', $output)) {
       $output = preg_replace('@((?:DEFAULT )?(?:CHARSET|CHARACTER SET) \w+)@', '$1 ' . $collate, $output);
     }
     else {
