@@ -13,6 +13,7 @@ For a full description visit the project page:
 Bug reports, feature suggestions and latest developments:
   http://drupal.org/project/issues/demo
 
+Currently only MySQL and PostgreSQL are supported.SQLite isn't supported.
 
 -- INSTALLATION --
 
