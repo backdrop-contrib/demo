@@ -13,15 +13,15 @@
  */
 function demo_reset_form_demo_admin_settings_alter(&$form, &$form_state) {
   $intervals = array(
-    // 0, 5, 10, 15, 30 minutes
+    // 0, 5, 10, 15, 30 minutes.
     0, 300, 600, 900, 1800,
-    // 1-6, 9, 12 hours
+    // 1-6, 9, 12 hours.
     3600, 3600 * 2, 3600 * 3, 3600 * 4, 3600 * 5, 3600 * 6, 3600 * 9, 3600 * 12,
-    // 1-3 days
+    // 1-3 days.
     86400, 86400 * 2, 86400 * 3,
-    // 1, 2, 3 weeks
+    // 1, 2, 3 weeks.
     604800, 604800 * 2, 604800 * 3,
-    // 1, 3 months
+    // 1, 3 months.
     86400 * 30, 86400 * 90,
   );
   $intervals = drupal_map_assoc($intervals, 'format_interval');
@@ -81,6 +81,9 @@ function demo_reset_set_default($filename) {
   drupal_set_message(t('Snapshot %title will be used for cron runs.', array('%title' => $filename)));
 }
 
+/**
+ *
+ */
 function demo_reset_form_demo_dump_form_alter(&$form, &$form_state) {
   $form['dump']['default'] = array(
     '#title' => t('Use as default snapshot for cron runs'),
@@ -179,4 +182,3 @@ function demo_reset_cron() {
     }
   }
 }
-

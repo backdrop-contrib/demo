@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Demonstration Site administrative pages
+ * Demonstration Site administrative pages.
  */
 
 /**
@@ -38,7 +38,7 @@ function demo_admin_settings($form, &$form_state) {
  * Form validation handler for demo_admin_settings().
  */
 function demo_admin_settings_validate($form, &$form_state) {
-  //Passing full URI for validation.
+  // Passing full URI for validation.
   $directory = 'private://' . $form_state['values']['demo_dump_path'];
   if (!file_prepare_directory($directory, FILE_CREATE_DIRECTORY)) {
     form_set_error('demo_dump_path', t('The snapshot directory %directory could not be created.', array('%directory' => $directory)));
@@ -324,7 +324,7 @@ function _demo_reset($filename, $verbose = TRUE) {
   $is_version_1_0_dump = version_compare($info['version'], '1.1', '<');
   $watchdog = Database::getConnection()->prefixTables('{watchdog}');
   foreach (demo_enum_tables() as $table => $dump_options) {
-    // Skip watchdog, except for legacy dumps that included the watchdog table
+    // Skip watchdog, except for legacy dumps that included the watchdog table.
     if ($table != $watchdog || $is_version_1_0_dump) {
       db_query("DROP TABLE $table");
     }
@@ -341,7 +341,7 @@ function _demo_reset($filename, $verbose = TRUE) {
         $options = array(
           'target' => 'default',
           'return' => Database::RETURN_NULL,
-          // 'throw_exception' => FALSE,
+          // 'throw_exception' => FALSE,.
         );
         $stmt = Database::getConnection($options['target'])->prepare($query);
         if (!$stmt->execute(array(), $options)) {
@@ -392,6 +392,9 @@ function _demo_reset($filename, $verbose = TRUE) {
   return $success;
 }
 
+/**
+ *
+ */
 function demo_get_fileconfig($filename = 'demo_site') {
   $fileconfig = array();
 
@@ -416,9 +419,9 @@ function demo_get_fileconfig($filename = 'demo_site') {
   $fileconfig['site'] = str_replace('sites', '', conf_path());
   /*
   if (strpos($fileconfig['path'], conf_path()) === FALSE && strpos($fileconfig['path'], '/all/') === FALSE) {
-    $fileconfig['dumppath'] .= $fileconfig['site'];
+  $fileconfig['dumppath'] .= $fileconfig['site'];
   }
-  */
+   */
 
   // Check if directory exists.
   if (!file_prepare_directory($fileconfig['dumppath'], FILE_CREATE_DIRECTORY)) {
@@ -451,10 +454,13 @@ function demo_load_include() {
   return TRUE;
 }
 
+/**
+ *
+ */
 function demo_get_dumps() {
   $fileconfig = demo_get_fileconfig();
 
-  // Fetch list of available info files
+  // Fetch list of available info files.
   $files = file_scan_directory($fileconfig['dumppath'], '/\.info$/');
 
   foreach ($files as $file => $object) {
@@ -520,6 +526,9 @@ function demo_get_dumps() {
   return $element;
 }
 
+/**
+ *
+ */
 function demo_get_info($filename, $field = NULL) {
   $info = array();
 
@@ -546,16 +555,19 @@ function demo_get_info($filename, $field = NULL) {
   }
 }
 
+/**
+ *
+ */
 function demo_set_info($values = NULL) {
   if (isset($values['filename']) && is_array($values)) {
-    // Check for valid filename
+    // Check for valid filename.
     if (!preg_match('/^[-_\.a-zA-Z0-9]+$/', $values['filename'])) {
       drupal_set_message(t('Invalid filename. It must only contain alphanumeric characters, dots, dashes and underscores. Other characters, including spaces, are not allowed.'), 'error');
       return FALSE;
     }
 
     if (!empty($values['description'])) {
-      // parse_ini_file() doesn't allow certain characters in description
+      // parse_ini_file() doesn't allow certain characters in description.
       $s = array("\r\n", "\r", "\n", '"');
       $r = array(' ', ' ', ' ', "'");
       $values['description'] = str_replace($s, $r, $values['description']);
@@ -569,14 +581,14 @@ function demo_set_info($values = NULL) {
       }
     }
 
-    // Set values
+    // Set values.
     $infos = array();
     $infos['filename'] = $values['filename'];
     $infos['description'] = '"' . $values['description'] . '"';
     $infos['modules'] = implode(' ', module_list());
     $infos['version'] = DEMO_DUMP_VERSION;
 
-    // Write information to .info file
+    // Write information to .info file.
     $fileconfig = demo_get_fileconfig($values['filename']);
     $infofile = fopen($fileconfig['infofile'], 'w');
     foreach ($infos as $key => $info) {
@@ -710,4 +722,3 @@ function demo_download($filename, $type) {
   );
   file_transfer($fileconfig[$type . 'file'], $headers);
 }
-

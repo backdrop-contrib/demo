@@ -1,6 +1,10 @@
 <?php
 
-// Some older mysql client libs are missing this constant.
+/**
+ * @file
+ * Some older mysql client libs are missing this constant.
+ */
+
 if (!defined('MYSQLI_BINARY_FLAG')) {
   define('MYSQLI_BINARY_FLAG', 128);
 }
@@ -139,7 +143,6 @@ function _demo_dump_table_schema($fp, $table) {
   //   table definition (after leading ")" on last line) and merge anything
   //   missing into it, and re-append it again. There are too many differences
   //   between MySQL 5.0 and 5.1+, and PHP mysql(i) and pdo_mysql extensions.
-
   // PDO is missing the table engine.
   if (!strpos($output, ' ENGINE=')) {
     $output .= ' ENGINE=' . $status['engine'];
@@ -184,10 +187,9 @@ function _demo_dump_table_schema($fp, $table) {
   }
 
   // @todo Depends on whether we dump data and table existence on import.
-//  if (!empty($status['auto_increment'])) {
-//    $output .= ' AUTO_INCREMENT=' . $status['auto_increment'];
-//  }
-
+  //   if (!empty($status['auto_increment'])) {
+  //    $output .= ' AUTO_INCREMENT=' . $status['auto_increment'];
+  //  }
   $output .= ";\n";
   fwrite($fp, $output);
 }
@@ -216,7 +218,7 @@ function _demo_dump_table_data($fp, $table) {
     // Disable indices to speed up import.
     $output .= "/*!40000 ALTER TABLE $table DISABLE KEYS */;\n";
 
-    // Escape backslashes, PHP code, special chars
+    // Escape backslashes, PHP code, special chars.
     $search = array('\\', "'", "\x00", "\x0a", "\x0d", "\x1a");
     $replace = array('\\\\', "''", '\0', '\n', '\r', '\Z');
 
@@ -230,13 +232,13 @@ function _demo_dump_table_data($fp, $table) {
       $values = array();
       $field = 0;
       foreach ($row as $value) {
-        // NULL
+        // NULL.
         if (!isset($value) || is_null($value)) {
           $values[] = 'NULL';
         }
         // A number
-        // timestamp is numeric on some MySQL 4.1, BLOBs are sometimes numeric
-        else if ($fields[$field]->numeric && !$fields[$field]->timestamp && !$fields[$field]->blob) {
+        // timestamp is numeric on some MySQL 4.1, BLOBs are sometimes numeric.
+        elseif ($fields[$field]->numeric && !$fields[$field]->timestamp && !$fields[$field]->blob) {
           $values[] = $value;
         }
         // A true BLOB
@@ -244,9 +246,9 @@ function _demo_dump_table_data($fp, $table) {
         //   option is used, for fields having the binary attribute
         //   no hex is generated
         // - a TEXT field returns type blob but a real blob
-        //   returns also the 'binary' flag
-        else if ($fields[$field]->binary && $fields[$field]->blob) {
-          // Empty blobs need to be different, but '0' is also empty :-(
+        //   returns also the 'binary' flag.
+        elseif ($fields[$field]->binary && $fields[$field]->blob) {
+          // Empty blobs need to be different, but '0' is also empty :-(.
           if (empty($value) && $value != '0') {
             $values[] = "''";
           }
@@ -254,7 +256,7 @@ function _demo_dump_table_data($fp, $table) {
             $values[] = '0x' . bin2hex($value);
           }
         }
-        // Something else -> treat as a string
+        // Something else -> treat as a string.
         else {
           $values[] = "'" . str_replace($search, $replace, $value) . "'";
         }
@@ -338,4 +340,3 @@ function _demo_table_is_view($table) {
   }
   return $tables[$table];
 }
-

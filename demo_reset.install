@@ -11,4 +11,3 @@
 function demo_reset_uninstall() {
   variable_del('demo_dump_cron');
 }
-

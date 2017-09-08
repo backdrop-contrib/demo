@@ -118,4 +118,3 @@ function demo_reset($filename, $verbose = TRUE) {
   module_load_include('inc', 'demo', 'demo.admin');
   return _demo_reset($filename, $verbose);
 }
-
