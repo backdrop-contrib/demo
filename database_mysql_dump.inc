@@ -165,16 +165,16 @@ function _demo_dump_table_schema($fp, $table) {
     // first underscore is the character set.
     // @see PMA_exportDBCreate()
     if (strpos($status['collation'], '_')) {
-      $collate = 'COLLATE=' . $status['collation'];
+      //$collate = 'COLLATE=' . $status['collation'];
     }
     // If there is a character set defined already, just append the collation.
     // Only look for the table definition (on the last line); column definitions
     // may use a special collation, which must not be changed.
     if (preg_match('@^\).+(?:CHARSET|CHARACTER SET)@m', $output)) {
-      $output = preg_replace('@((?:DEFAULT )?(?:CHARSET|CHARACTER SET) \w+)@', '$1 ' . $collate, $output);
+      $output = preg_replace('@((?:DEFAULT )?(?:CHARSET|CHARACTER SET) \w+)@', '$1 ', $output);
     }
     else {
-      $output .= ' DEFAULT CHARSET=utf8 ' . $collate;
+      $output .= ' DEFAULT CHARSET=utf8 ';
     }
   }
 
