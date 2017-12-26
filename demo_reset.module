@@ -118,7 +118,6 @@ function demo_reset_block_info() {
   $blocks['reset'] = array(
     'info' => t('Demonstration site reset'),
     'status' => 1,
-    'region' => 'sidebar_second',
     'cache' => DRUPAL_NO_CACHE,
   );
   return $blocks;
