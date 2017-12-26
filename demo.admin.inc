@@ -638,7 +638,7 @@ function demo_enum_tables() {
       if (preg_match($rx, $table, $matches)) {
         $table_prefix = $matches[0];
         $plain_table = substr($table, strlen($table_prefix));
-        if ($prefixes[$plain_table] == $table_prefix || $prefixes['default'] == $table_prefix) {
+        if ((isset($prefixes[$plain_table]) && $prefixes[$plain_table] == $table_prefix) || $prefixes['default'] == $table_prefix) {
           $tables[$table] = array('schema' => TRUE, 'data' => TRUE);
         }
       }
