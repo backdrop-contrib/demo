@@ -129,10 +129,9 @@ function demo_dump_form($form, &$form_state) {
   $form['dump']['filename'] = array(
     '#title' => t('Name'),
     '#type' => 'textfield',
-    '#autocomplete_path' => 'demo/autocomplete',
     '#required' => TRUE,
     '#maxlength' => 128,
-    '#description' => t('Allowed characters: a-z, 0-9, dashes ("-"), underscores ("_") and dots.'),
+    '#description' => t('Allowed characters: a-z, A-Z, 0-9, dashes ("-"), underscores ("_") and dots.'),
   );
   $form['dump']['description'] = array(
     '#title' => t('Description'),
@@ -681,21 +680,6 @@ function demo_enum_tables() {
   }
 
   return $tables;
-}
-
-/**
- * Retrieve a pipe delimited string of autocomplete suggestions for existing snapshots.
- */
-function demo_autocomplete($string = '') {
-  $matches = array();
-  if ($string && $fileconfig = demo_get_fileconfig()) {
-    $string = preg_quote($string);
-    $files = file_scan_directory($fileconfig['dumppath'], '/' . $string . '.*\.info$/');
-    foreach ($files as $file) {
-      $matches[$file->name] = check_plain($file->name);
-    }
-  }
-  drupal_json_output($matches);
 }
 
 /**

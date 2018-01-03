@@ -71,12 +71,6 @@ function demo_menu() {
     'weight' => 10,
   );
 
-  $items['demo/autocomplete'] = array(
-    'page callback' => 'demo_autocomplete',
-    'access arguments' => $admin_access,
-    'file' => 'demo.admin.inc',
-    'type' => MENU_CALLBACK,
-  );
   $items['demo/download'] = array(
     'page callback' => 'demo_download',
     'access arguments' => $admin_access,
