@@ -161,12 +161,6 @@ function _demo_dump_table_schema($fp, $table) {
   // utf8_general_ci as default database collation, if not overridden via
   // settings.php.
   if (!strpos($output, 'COLLATE=')) {
-    // Only if the collation contains a underscore, the first string up to the
-    // first underscore is the character set.
-    // @see PMA_exportDBCreate()
-    if (strpos($status['collation'], '_')) {
-      //$collate = 'COLLATE=' . $status['collation'];
-    }
     // If there is a character set defined already, just append the collation.
     // Only look for the table definition (on the last line); column definitions
     // may use a special collation, which must not be changed.
