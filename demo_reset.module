@@ -4,32 +4,59 @@
  * @file
  * Demonstration site reset module.
  *
- * This module is supposed to be used on public Drupal demonstration sites only.
+ * This module is supposed to be used on public Backdrop demonstration sites only.
  * Use at your own risk.
  */
+
+/**
+ * Implements hook_config_info().
+ */
+function demo_reset_config_info() {
+  $prefixes['demo_reset.settings'] = array(
+    'label' => t('Demo reset settings'),
+    'group' => t('Configuration'),
+  );
+  return $prefixes;
+}
 
 /**
  * Implements hook_form_FORMID_alter().
  */
 function demo_reset_form_demo_admin_settings_alter(&$form, &$form_state) {
   $intervals = array(
-    // 0, 5, 10, 15, 30 minutes.
-    0, 300, 600, 900, 1800,
-    // 1-6, 9, 12 hours.
-    3600, 3600 * 2, 3600 * 3, 3600 * 4, 3600 * 5, 3600 * 6, 3600 * 9, 3600 * 12,
-    // 1-3 days.
-    86400, 86400 * 2, 86400 * 3,
-    // 1, 2, 3 weeks.
-    604800, 604800 * 2, 604800 * 3,
-    // 1, 3 months.
-    86400 * 30, 86400 * 90,
+    // 0, 5, 10, 15, 30 minutes
+    0,
+    300,
+    600,
+    900,
+    1800,
+    // 1-6, 9, 12 hours
+    3600,
+    3600 * 2,
+    3600 * 3,
+    3600 * 4,
+    3600 * 5,
+    3600 * 6,
+    3600 * 9,
+    3600 * 12,
+    // 1-3 days
+    86400,
+    86400 * 2,
+    86400 * 3,
+    // 1, 2, 3 weeks
+    604800,
+    604800 * 2,
+    604800 * 3,
+    // 1, 3 months
+    86400 * 30,
+    86400 * 90,
   );
-  $intervals = drupal_map_assoc($intervals, 'format_interval');
+  $intervals = backdrop_map_assoc($intervals, 'format_interval');
   $form['demo_reset_interval'] = array(
     '#type' => 'select',
     '#title' => t('Automatic reset interval'),
     '#required' => FALSE,
-    '#default_value' => variable_get('demo_reset_interval', 0),
+    '#default_value' => config_get('demo.settings', 'demo_reset_interval'),
     '#options' => $intervals,
     '#empty_value' => 0,
     '#description' => t('Requires a <a href="@snapshots-url">default snapshot</a> and <a href="@cron-url">cron</a> to run in the configured interval.', array(
@@ -43,13 +70,14 @@ function demo_reset_form_demo_admin_settings_alter(&$form, &$form_state) {
  * Implements hook_form_FORMID_alter().
  */
 function demo_reset_form_demo_manage_form_alter(&$form, &$form_state) {
+  $config = config('demo.settings');
   $form['status']['demo_reset_default'] = array(
     '#type' => 'item',
     '#title' => t('Default snapshot'),
-    '#markup' => check_plain(variable_get('demo_dump_cron', t('- None -'))),
+    '#markup' => check_plain($config->get('demo_dump_cron')),
   );
 
-  $demo_dump_cron = variable_get('demo_dump_cron', 'demo_site');
+  $demo_dump_cron = $config->get('demo_dump_cron');
   foreach ($form['dump'] as $name => $option) {
     if ($name == $demo_dump_cron) {
       $form['dump'][$name]['#value'] = $name;
@@ -77,12 +105,13 @@ function demo_reset_demo_manage_form_submit($form, &$form_state) {
  *   The filename of the snapshot.
  */
 function demo_reset_set_default($filename) {
-  variable_set('demo_dump_cron', $filename);
-  drupal_set_message(t('Snapshot %title will be used for cron runs.', array('%title' => $filename)));
+  config_set('demo.settings', 'demo_dump_cron', $filename);
+  backdrop_set_message(t('Snapshot %title will be used for cron runs.', array('%title' => $filename)));
 }
 
 /**
- *
+ * @todo Please document this function.
+ * @see http://drupal.org/node/1354
  */
 function demo_reset_form_demo_dump_form_alter(&$form, &$form_state) {
   $form['dump']['default'] = array(
@@ -108,7 +137,7 @@ function demo_reset_demo_reset($filename, $info, $fileconfig) {
   // Reset default dump to load on cron. Normally, this should be the same as
   // the original value, but whenever we reset the site to a different snapshot,
   // it's very unlikely that we want to reset to the previous snapshot.
-  variable_set('demo_dump_cron', $info['filename']);
+  config_set('demo.settings', 'demo_dump_cron', $info['filename']);
 }
 
 /**
@@ -118,7 +147,8 @@ function demo_reset_block_info() {
   $blocks['reset'] = array(
     'info' => t('Demonstration site reset'),
     'status' => 1,
-    'cache' => DRUPAL_NO_CACHE,
+    'region' => 'sidebar_second',
+    'cache' => BACKDROP_NO_CACHE,
   );
   return $blocks;
 }
@@ -127,12 +157,12 @@ function demo_reset_block_info() {
  * Implements hook_block_view().
  */
 function demo_reset_block_view($delta = '') {
-  if (!variable_get('demo_dump_cron', '')) {
+  if (!config_get('demo.settings', 'demo_dump_cron')) {
     return array();
   }
   $block = array(
     'subject' => t('Reset demo'),
-    'content' => drupal_get_form('demo_reset_block_form'),
+    'content' => backdrop_get_form('demo_reset_block_form'),
   );
   return $block;
 }
@@ -147,7 +177,7 @@ function demo_reset_block_form($form, &$form_state) {
     '#type' => 'value',
     '#value' => $_GET['q'],
   );
-  $filename = variable_get('demo_dump_cron', '');
+  $filename = config_get('demo.settings', 'demo_dump_cron');
   $form['filename'] = array(
     '#type' => 'value',
     '#value' => $filename,
@@ -171,13 +201,15 @@ function demo_reset_block_form_submit($form, &$form_state) {
 }
 
 /**
- * Implementation of hook_cron().
+ * Implements hook_cron().
  */
 function demo_reset_cron() {
-  if ($interval = variable_get('demo_reset_interval', 0)) {
+  $config = config('demo.settings');
+  if ($interval = $config->get('demo_reset_interval')) {
     // See if it's time for a reset.
-    if ((REQUEST_TIME - $interval) >= variable_get('demo_reset_last', 0)) {
-      demo_reset(variable_get('demo_dump_cron', 'demo_site'), FALSE);
+    if ((REQUEST_TIME - $interval) >= $config->get('demo_reset_last')) {
+      demo_reset($config->get('demo_dump_cron'), FALSE);
     }
   }
 }
+

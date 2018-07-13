@@ -1,0 +1,27 @@
+<?php
+
+/**
+ * @file
+ * Demonstration site reset module installation functions.
+ */
+
+/**
+ * Implements hook_uninstall().
+ */
+function demo_reset_uninstall() {
+}
+
+
+/**
+ * Implements hook_update_N().
+ */
+function demo_reset_update_1000() {
+}
+
+/**
+ * Implements hook_install().
+ */
+function demo_reset_install() {
+  // Dynamically generated variable data was detected.
+}
+

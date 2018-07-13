@@ -1,10 +1,6 @@
 <?php
 
-/**
- * @file
- * Some older mysql client libs are missing this constant.
- */
-
+// Some older mysql client libs are missing this constant.
 if (!defined('MYSQLI_BINARY_FLAG')) {
   define('MYSQLI_BINARY_FLAG', 128);
 }
@@ -34,7 +30,7 @@ function demo_dump_db($filename, $options = array()) {
     $header[] = '-- Date: ' . format_date(REQUEST_TIME, 'small');
     $header[] = '-- Server version: ' . db_query('SELECT version()')->fetchField();
     $header[] = '-- PHP version: ' . PHP_VERSION;
-    $header[] = '-- Drupal version: ' . VERSION;
+    $header[] = '-- Backdrop version: ' . VERSION;
 
     // Avoid auto value for zero values (required for user id 0).
     $header[] = '';
@@ -72,7 +68,7 @@ function demo_dump_db($filename, $options = array()) {
     // Revert collations for potential subsequent database queries not belonging
     // to this module.
     // @todo Double-check this behavior according to the results of
-    //   http://drupal.org/node/772678
+//   http://drupal.org/node/772678
     $footer[] = 'SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT;';
     $footer[] = 'SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS;';
     $footer[] = 'SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION;';
@@ -140,9 +136,10 @@ function _demo_dump_table_schema($fp, $table) {
   );
 
   // @todo Rethink the following code. Perhaps try to strip + parse the existing
-  //   table definition (after leading ")" on last line) and merge anything
-  //   missing into it, and re-append it again. There are too many differences
-  //   between MySQL 5.0 and 5.1+, and PHP mysql(i) and pdo_mysql extensions.
+//   table definition (after leading ")" on last line) and merge anything
+//   missing into it, and re-append it again. There are too many differences
+//   between MySQL 5.0 and 5.1+, and PHP mysql(i) and pdo_mysql extensions.
+
   // PDO is missing the table engine.
   if (!strpos($output, ' ENGINE=')) {
     $output .= ' ENGINE=' . $status['engine'];
@@ -157,18 +154,24 @@ function _demo_dump_table_schema($fp, $table) {
   // This addition assumes that a collation specified for a table is taken over
   // for the table's columns. The MySQL manual does not state whether this is
   // the case, but manual tests confirmed that it works that way.
-  // Like Drupal core, we need to enforce UTF8 as character set and
+  // Like Backdrop core, we need to enforce UTF8 as character set and
   // utf8_general_ci as default database collation, if not overridden via
   // settings.php.
   if (!strpos($output, 'COLLATE=')) {
+    // Only if the collation contains a underscore, the first string up to the
+    // first underscore is the character set.
+    // @see PMA_exportDBCreate()
+    if (strpos($status['collation'], '_')) {
+      $collate = 'COLLATE=' . $status['collation'];
+    }
     // If there is a character set defined already, just append the collation.
     // Only look for the table definition (on the last line); column definitions
     // may use a special collation, which must not be changed.
     if (preg_match('@^\).+(?:CHARSET|CHARACTER SET)@m', $output)) {
-      $output = preg_replace('@((?:DEFAULT )?(?:CHARSET|CHARACTER SET) \w+)@', '$1 ', $output);
+      $output = preg_replace('@((?:DEFAULT )?(?:CHARSET|CHARACTER SET) \w+)@', '$1 ' . $collate, $output);
     }
     else {
-      $output .= ' DEFAULT CHARSET=utf8 ';
+      $output .= ' DEFAULT CHARSET=utf8 ' . $collate;
     }
   }
 
@@ -181,9 +184,10 @@ function _demo_dump_table_schema($fp, $table) {
   }
 
   // @todo Depends on whether we dump data and table existence on import.
-  //   if (!empty($status['auto_increment'])) {
-  //    $output .= ' AUTO_INCREMENT=' . $status['auto_increment'];
-  //  }
+//  if (!empty($status['auto_increment'])) {
+//    $output .= ' AUTO_INCREMENT=' . $status['auto_increment'];
+//  }
+
   $output .= ";\n";
   fwrite($fp, $output);
 }
@@ -212,7 +216,7 @@ function _demo_dump_table_data($fp, $table) {
     // Disable indices to speed up import.
     $output .= "/*!40000 ALTER TABLE $table DISABLE KEYS */;\n";
 
-    // Escape backslashes, PHP code, special chars.
+    // Escape backslashes, PHP code, special chars
     $search = array('\\', "'", "\x00", "\x0a", "\x0d", "\x1a");
     $replace = array('\\\\', "''", '\0', '\n', '\r', '\Z');
 
@@ -226,23 +230,23 @@ function _demo_dump_table_data($fp, $table) {
       $values = array();
       $field = 0;
       foreach ($row as $value) {
-        // NULL.
+        // NULL
         if (!isset($value) || is_null($value)) {
           $values[] = 'NULL';
         }
         // A number
-        // timestamp is numeric on some MySQL 4.1, BLOBs are sometimes numeric.
-        elseif ($fields[$field]->numeric && !$fields[$field]->timestamp && !$fields[$field]->blob) {
+        // timestamp is numeric on some MySQL 4.1, BLOBs are sometimes numeric
+        else if ($fields[$field]->numeric && !$fields[$field]->timestamp && !$fields[$field]->blob) {
           $values[] = $value;
         }
         // A true BLOB
         // - mysqldump only generates hex data when the --hex-blob
-        //   option is used, for fields having the binary attribute
-        //   no hex is generated
+//   option is used, for fields having the binary attribute
+//   no hex is generated
         // - a TEXT field returns type blob but a real blob
-        //   returns also the 'binary' flag.
-        elseif ($fields[$field]->binary && $fields[$field]->blob) {
-          // Empty blobs need to be different, but '0' is also empty :-(.
+//   returns also the 'binary' flag
+        else if ($fields[$field]->binary && $fields[$field]->blob) {
+          // Empty blobs need to be different, but '0' is also empty :-(
           if (empty($value) && $value != '0') {
             $values[] = "''";
           }
@@ -250,7 +254,7 @@ function _demo_dump_table_data($fp, $table) {
             $values[] = '0x' . bin2hex($value);
           }
         }
-        // Something else -> treat as a string.
+        // Something else -> treat as a string
         else {
           $values[] = "'" . str_replace($search, $replace, $value) . "'";
         }
@@ -334,3 +338,4 @@ function _demo_table_is_view($table) {
   }
   return $tables[$table];
 }
+

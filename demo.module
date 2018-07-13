@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Demonstration site API Drupal integration functions.
+ * Demonstration site API Backdrop integration functions.
  */
 
 /**
@@ -21,12 +21,13 @@ function demo_permission() {
  * Implements hook_menu().
  */
 function demo_menu() {
+  $items = array();
   $admin_access = array('administer demo settings');
 
   $items['admin/structure/demo'] = array(
     'title' => 'Snapshots',
     'description' => 'Create snapshots and reset the site.',
-    'page callback' => 'drupal_get_form',
+    'page callback' => 'backdrop_get_form',
     'page arguments' => array('demo_manage_form'),
     'access arguments' => $admin_access,
     'file' => 'demo.admin.inc',
@@ -38,7 +39,7 @@ function demo_menu() {
   );
   $items['admin/structure/demo/dump'] = array(
     'title' => 'Create snapshot',
-    'page callback' => 'drupal_get_form',
+    'page callback' => 'backdrop_get_form',
     'page arguments' => array('demo_dump_form'),
     'access arguments' => $admin_access,
     'file' => 'demo.admin.inc',
@@ -46,7 +47,7 @@ function demo_menu() {
   );
   $items['admin/structure/demo/reset'] = array(
     'title' => 'Reset',
-    'page callback' => 'drupal_get_form',
+    'page callback' => 'backdrop_get_form',
     'page arguments' => array('demo_reset_confirm'),
     'access arguments' => $admin_access,
     'file' => 'demo.admin.inc',
@@ -55,7 +56,7 @@ function demo_menu() {
   );
   $items['admin/structure/demo/delete/%'] = array(
     'title' => 'Delete snapshot',
-    'page callback' => 'drupal_get_form',
+    'page callback' => 'backdrop_get_form',
     'page arguments' => array('demo_delete_confirm', 4),
     'access arguments' => $admin_access,
     'file' => 'demo.admin.inc',
@@ -63,7 +64,7 @@ function demo_menu() {
   );
   $items['admin/structure/demo/settings'] = array(
     'title' => 'Settings',
-    'page callback' => 'drupal_get_form',
+    'page callback' => 'backdrop_get_form',
     'page arguments' => array('demo_admin_settings'),
     'access arguments' => $admin_access,
     'file' => 'demo.admin.inc',
@@ -71,6 +72,12 @@ function demo_menu() {
     'weight' => 10,
   );
 
+  $items['demo/autocomplete'] = array(
+    'page callback' => 'demo_autocomplete',
+    'access arguments' => $admin_access,
+    'file' => 'demo.admin.inc',
+    'type' => MENU_CALLBACK,
+  );
   $items['demo/download'] = array(
     'page callback' => 'demo_download',
     'access arguments' => $admin_access,
@@ -111,4 +118,15 @@ function demo_dump($options) {
 function demo_reset($filename, $verbose = TRUE) {
   module_load_include('inc', 'demo', 'demo.admin');
   return _demo_reset($filename, $verbose);
+}
+
+/**
+ * Implements hook_config_info().
+ */
+function demo_config_info() {
+  $prefixes['demo.settings'] = array(
+    'label' => t('Demo settings'),
+    'group' => t('Configuration'),
+  );
+  return $prefixes;
 }

@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Demonstration Site administrative pages.
+ * Demonstration Site administrative pages
  */
 
 /**
@@ -17,16 +17,17 @@ function demo_admin_settings($form, &$form_state) {
   if (!file_stream_wrapper_valid_scheme('private')) {
     form_set_error('', t('The <a href="@file-settings-url">private filesystem</a> must be configured in order to create or load snapshots.', array(
       '@file-settings-url' => url('admin/config/media/file-system', array(
-        'query' => drupal_get_destination(),
+        'query' => backdrop_get_destination(),
       )),
     )));
   }
 
+  $form['#config'] = 'demo.settings';
   $form['demo_dump_path'] = array(
     '#type' => 'textfield',
     '#title' => t('Snapshot file system path'),
     '#field_prefix' => 'private://',
-    '#default_value' => variable_get('demo_dump_path', 'demo'),
+    '#default_value' => config_get('demo.settings', 'demo_dump_path'),
     '#required' => TRUE,
   );
   $form['#validate'][] = 'demo_admin_settings_validate';
@@ -38,10 +39,8 @@ function demo_admin_settings($form, &$form_state) {
  * Form validation handler for demo_admin_settings().
  */
 function demo_admin_settings_validate($form, &$form_state) {
-  // Passing full URI for validation.
-  $directory = 'private://' . $form_state['values']['demo_dump_path'];
-  if (!file_prepare_directory($directory, FILE_CREATE_DIRECTORY)) {
-    form_set_error('demo_dump_path', t('The snapshot directory %directory could not be created.', array('%directory' => $directory)));
+  if (!file_prepare_directory($form_state['values']['demo_dump_path'], FILE_CREATE_DIRECTORY)) {
+    form_set_error('demo_dump_path', t('The snapshot directory %directory could not be created.', array('%directory' => $form_state['values']['demo_dump_path'])));
   }
 }
 
@@ -56,10 +55,10 @@ function demo_manage_form($form, &$form_state) {
       'class' => array('demo-status', 'clearfix'),
     ),
     '#attached' => array(
-      'css' => array(drupal_get_path('module', 'demo') . '/demo.admin.css'),
+      'css' => array(backdrop_get_path('module', 'demo') . '/demo.admin.css'),
     ),
   );
-  $reset_date = variable_get('demo_reset_last', 0);
+  $reset_date = config_get('demo.settings', 'demo_reset_last');
   $form['status']['reset_last'] = array(
     '#type' => 'item',
     '#title' => t('Last reset'),
@@ -97,7 +96,7 @@ function demo_manage_delete_submit($form, &$form_state) {
 function demo_delete_confirm($form, &$form_state, $filename) {
   $fileconfig = demo_get_fileconfig($filename);
   if (!file_exists($fileconfig['infofile'])) {
-    return drupal_access_denied();
+    return backdrop_access_denied();
   }
 
   $form['filename'] = array(
@@ -114,7 +113,10 @@ function demo_delete_confirm_submit($form, &$form_state) {
   $files = demo_get_fileconfig($form_state['values']['filename']);
   unlink($files['sqlfile']);
   unlink($files['infofile']);
-  drupal_set_message(t('Snapshot %title has been deleted.', array(
+  unlink($files['configfile']);
+
+  //unlink();
+  backdrop_set_message(t('Snapshot %title has been deleted.', array(
     '%title' => $form_state['values']['filename'],
   )));
   $form_state['redirect'] = 'admin/structure/demo';
@@ -129,9 +131,10 @@ function demo_dump_form($form, &$form_state) {
   $form['dump']['filename'] = array(
     '#title' => t('Name'),
     '#type' => 'textfield',
+    '#autocomplete_path' => 'demo/autocomplete',
     '#required' => TRUE,
     '#maxlength' => 128,
-    '#description' => t('Allowed characters: a-z, A-Z, 0-9, dashes ("-"), underscores ("_") and dots.'),
+    '#description' => t('Allowed characters: a-z, 0-9, dashes ("-"), underscores ("_") and dots.'),
   );
   $form['dump']['description'] = array(
     '#title' => t('Description'),
@@ -154,8 +157,8 @@ function demo_dump_form($form, &$form_state) {
   else {
     $form = confirm_form($form,
       t('Are you sure you want to replace the existing %name snapshot?', array(
-        '%name' => $form_state['values']['dump']['filename'],
-      )),
+      '%name' => $form_state['values']['dump']['filename'],
+    )),
       'admin/structure/demo',
       t('A snapshot with the same name already exists and will be replaced. This action cannot be undone.')
     );
@@ -181,7 +184,7 @@ function demo_dump_form_validate(&$form, &$form_state) {
  */
 function demo_dump_form_submit($form, &$form_state) {
   if ($fileconfig = _demo_dump($form_state['values']['dump'])) {
-    drupal_set_message(t('Snapshot %filename has been created.', array(
+    backdrop_set_message(t('Snapshot %filename has been created.', array(
       '%filename' => $form_state['values']['dump']['filename'],
     )));
   }
@@ -210,7 +213,7 @@ function _demo_dump($options) {
   }
 
   // Increase PHP's max_execution_time for large dumps.
-  drupal_set_time_limit(600);
+  backdrop_set_time_limit(600);
 
   // Generate the info file.
   $info = demo_set_info($options);
@@ -220,16 +223,20 @@ function _demo_dump($options) {
 
   // Allow other modules to alter the dump options.
   $fileconfig = demo_get_fileconfig($info['filename']);
-  drupal_alter('demo_dump', $options, $info, $fileconfig);
+  backdrop_alter('demo_dump', $options, $info, $fileconfig);
 
   // Perform database dump.
   if (!demo_dump_db($fileconfig['sqlfile'], $options)) {
     return FALSE;
   }
+  // Save config tar.gz file.
+  $config_storage = config_get_config_storage();
+  $config_storage->exportArchive(backdrop_realpath($fileconfig['configfile']));
 
   // Adjust file permissions.
-  drupal_chmod($fileconfig['infofile']);
-  drupal_chmod($fileconfig['sqlfile']);
+  backdrop_chmod($fileconfig['infofile']);
+  backdrop_chmod($fileconfig['sqlfile']);
+  backdrop_chmod($fileconfig['configfile']);
 
   // Allow other modules to act on successful dumps.
   module_invoke_all('demo_dump', $options, $info, $fileconfig);
@@ -288,12 +295,12 @@ function _demo_reset($filename, $verbose = TRUE) {
   }
 
   // Increase PHP's max_execution_time for large dumps.
-  drupal_set_time_limit(600);
+  backdrop_set_time_limit(600);
 
   $fileconfig = demo_get_fileconfig($filename);
   if (!file_exists($fileconfig['sqlfile']) || !($fp = fopen($fileconfig['sqlfile'], 'r'))) {
     if ($verbose) {
-      drupal_set_message(t('Unable to read file %filename.', array(
+      backdrop_set_message(t('Unable to read file %filename.', array(
         '%filename' => $fileconfig['sqlfile'],
       )), 'error');
     }
@@ -310,7 +317,7 @@ function _demo_reset($filename, $verbose = TRUE) {
   // variables are not retained, resp., deleted after the reset.
   $variables = array(
     // Without the snapshot path, subsequent resets will not work.
-    'demo_dump_path' => variable_get('demo_dump_path', NULL),
+    'demo_dump_path' => config_get('demo.settings', 'demo_dump_path'),
   );
 
   // Temporarily disable foreign key checks for the time of import and before
@@ -323,7 +330,7 @@ function _demo_reset($filename, $verbose = TRUE) {
   $is_version_1_0_dump = version_compare($info['version'], '1.1', '<');
   $watchdog = Database::getConnection()->prefixTables('{watchdog}');
   foreach (demo_enum_tables() as $table => $dump_options) {
-    // Skip watchdog, except for legacy dumps that included the watchdog table.
+    // Skip watchdog, except for legacy dumps that included the watchdog table
     if ($table != $watchdog || $is_version_1_0_dump) {
       db_query("DROP TABLE $table");
     }
@@ -340,13 +347,13 @@ function _demo_reset($filename, $verbose = TRUE) {
         $options = array(
           'target' => 'default',
           'return' => Database::RETURN_NULL,
-          // 'throw_exception' => FALSE,.
+          // 'throw_exception' => FALSE,
         );
         $stmt = Database::getConnection($options['target'])->prepare($query);
         if (!$stmt->execute(array(), $options)) {
           if ($verbose) {
             // Don't use t() here, as the locale_* tables might not (yet) exist.
-            drupal_set_message(strtr('Query failed: %query', array('%query' => $query)), 'error');
+            backdrop_set_message(strtr('Query failed: %query', array('%query' => $query)), 'error');
           }
           $success = FALSE;
         }
@@ -356,19 +363,31 @@ function _demo_reset($filename, $verbose = TRUE) {
   }
   fclose($fp);
 
+  // Load site config files from snapshot
+  $config_storage = config_get_config_storage('active');
+  $config_storage->deleteAll();
+  try {
+    $config_storage->importArchive(backdrop_realpath($fileconfig['configfile']));
+  }
+  catch (\ConfigStorageException $e) {
+    form_set_error('import_tarball', t('Could not extract the contents of the tar file. The error message is "@message".', array('@message' => $e->getMessage())));
+  }
+/*
   // Retain variables.
   foreach ($variables as $key => $value) {
     if (isset($value)) {
+      // TODO This variable was probably removed in Backdrop without replacement.
       variable_set($key, $value);
     }
     else {
+      // TODO This variable was probably removed in Backdrop without replacement.
       variable_del($key);
     }
   }
-
+*/
   if ($success) {
     if ($verbose) {
-      drupal_set_message(t('Restored site from %filename.', array('%filename' => $fileconfig['sqlfile'])));
+      backdrop_set_message(t('Restored site from %filename.', array('%filename' => $fileconfig['sqlfile'])));
     }
     watchdog('demo', 'Restored site from %filename.', array('%filename' => $fileconfig['sqlfile']), WATCHDOG_NOTICE);
 
@@ -377,7 +396,7 @@ function _demo_reset($filename, $verbose = TRUE) {
   }
   else {
     if ($verbose) {
-      drupal_set_message(t('Failed to restore site from %filename.', array('%filename' => $fileconfig['sqlfile'])), 'error');
+      backdrop_set_message(t('Failed to restore site from %filename.', array('%filename' => $fileconfig['sqlfile'])), 'error');
     }
     watchdog('demo', 'Failed to restore site from %filename.', array('%filename' => $fileconfig['sqlfile']), WATCHDOG_ERROR);
   }
@@ -385,14 +404,15 @@ function _demo_reset($filename, $verbose = TRUE) {
   // Save request time of last reset, but not during re-installation via
   // demo_profile.
   if (!defined('MAINTENANCE_MODE') || MAINTENANCE_MODE !== 'install') {
-    variable_set('demo_reset_last', REQUEST_TIME);
+    config_set('demo.settings', 'demo_reset_last', REQUEST_TIME);
   }
 
   return $success;
 }
 
 /**
- *
+ * @todo Please document this function.
+ * @see http://drupal.org/node/1354
  */
 function demo_get_fileconfig($filename = 'demo_site') {
   $fileconfig = array();
@@ -404,22 +424,22 @@ function demo_get_fileconfig($filename = 'demo_site') {
     if (!defined('MAINTENANCE_MODE')) {
       form_set_error('', t('The <a href="@file-settings-url">private filesystem</a> must be configured in order to create or load snapshots.', array(
         '@file-settings-url' => url('admin/config/media/file-system', array(
-          'query' => drupal_get_destination(),
+          'query' => backdrop_get_destination(),
         )),
       )));
     }
     return FALSE;
   }
-  $fileconfig['path'] = 'private://' . variable_get('demo_dump_path', 'demo');
+  $fileconfig['path'] = 'private://' . config_get('demo.settings', 'demo_dump_path');
   $fileconfig['dumppath'] = $fileconfig['path'];
   // @todo Update to D7?
   // Append site name if it is not included in file_directory_path() and if not
   // storing files in sites/all/files.
   $fileconfig['site'] = str_replace('sites', '', conf_path());
   /*
-  if (strpos($fileconfig['path'], conf_path()) === FALSE && strpos($fileconfig['path'], '/all/') === FALSE) {
-  $fileconfig['dumppath'] .= $fileconfig['site'];
-  }
+   if (strpos($fileconfig['path'], conf_path()) === FALSE && strpos($fileconfig['path'], '/all/') === FALSE) {
+   $fileconfig['dumppath'] .= $fileconfig['site'];
+   }
    */
 
   // Check if directory exists.
@@ -438,6 +458,10 @@ function demo_get_fileconfig($filename = 'demo_site') {
   $fileconfig['info'] = $filename . '.info';
   $fileconfig['infofile'] = $fileconfig['dumppath'] . '/' . $fileconfig['info'];
 
+  //Build site configs files filename
+  $fileconfig['config'] = $filename . '.tar.gz';
+  $fileconfig['configfile'] = $fileconfig['dumppath'] . '/' . $fileconfig['config'];
+
   return $fileconfig;
 }
 
@@ -447,19 +471,20 @@ function demo_get_fileconfig($filename = 'demo_site') {
 function demo_load_include() {
   $engine = db_driver();
   if (!module_load_include('inc', 'demo', 'database_' . $engine . '_dump')) {
-    drupal_set_message(t('@database is not supported yet.', array('@database' => ucfirst($engine))), 'error');
+    backdrop_set_message(t('@database is not supported yet.', array('@database' => ucfirst($engine))), 'error');
     return FALSE;
   }
   return TRUE;
 }
 
 /**
- *
+ * @todo Please document this function.
+ * @see http://drupal.org/node/1354
  */
 function demo_get_dumps() {
   $fileconfig = demo_get_fileconfig();
 
-  // Fetch list of available info files.
+  // Fetch list of available info files
   $files = file_scan_directory($fileconfig['dumppath'], '/\.info$/');
 
   foreach ($files as $file => $object) {
@@ -480,7 +505,7 @@ function demo_get_dumps() {
       'class' => array('demo-snapshots-widget'),
     ),
     '#attached' => array(
-      'js' => array(drupal_get_path('module', 'demo') . '/demo.admin.js'),
+      'js' => array(backdrop_get_path('module', 'demo') . '/demo.admin.js'),
     ),
   );
 
@@ -526,7 +551,8 @@ function demo_get_dumps() {
 }
 
 /**
- *
+ * @todo Please document this function.
+ * @see http://drupal.org/node/1354
  */
 function demo_get_info($filename, $field = NULL) {
   $info = array();
@@ -555,18 +581,19 @@ function demo_get_info($filename, $field = NULL) {
 }
 
 /**
- *
+ * @todo Please document this function.
+ * @see http://drupal.org/node/1354
  */
 function demo_set_info($values = NULL) {
   if (isset($values['filename']) && is_array($values)) {
-    // Check for valid filename.
+    // Check for valid filename
     if (!preg_match('/^[-_\.a-zA-Z0-9]+$/', $values['filename'])) {
-      drupal_set_message(t('Invalid filename. It must only contain alphanumeric characters, dots, dashes and underscores. Other characters, including spaces, are not allowed.'), 'error');
+      backdrop_set_message(t('Invalid filename. It must only contain alphanumeric characters, dots, dashes and underscores. Other characters, including spaces, are not allowed.'), 'error');
       return FALSE;
     }
 
     if (!empty($values['description'])) {
-      // parse_ini_file() doesn't allow certain characters in description.
+      // parse_ini_file() doesn't allow certain characters in description
       $s = array("\r\n", "\r", "\n", '"');
       $r = array(' ', ' ', ' ', "'");
       $values['description'] = str_replace($s, $r, $values['description']);
@@ -580,14 +607,14 @@ function demo_set_info($values = NULL) {
       }
     }
 
-    // Set values.
+    // Set values
     $infos = array();
     $infos['filename'] = $values['filename'];
     $infos['description'] = '"' . $values['description'] . '"';
     $infos['modules'] = implode(' ', module_list());
     $infos['version'] = DEMO_DUMP_VERSION;
 
-    // Write information to .info file.
+    // Write information to .info file
     $fileconfig = demo_get_fileconfig($values['filename']);
     $infofile = fopen($fileconfig['infofile'], 'w');
     foreach ($infos as $key => $info) {
@@ -637,19 +664,25 @@ function demo_enum_tables() {
       if (preg_match($rx, $table, $matches)) {
         $table_prefix = $matches[0];
         $plain_table = substr($table, strlen($table_prefix));
-        if ((isset($prefixes[$plain_table]) && $prefixes[$plain_table] == $table_prefix) || $prefixes['default'] == $table_prefix) {
-          $tables[$table] = array('schema' => TRUE, 'data' => TRUE);
+        if ($prefixes[$plain_table] == $table_prefix || $prefixes['default'] == $table_prefix) {
+          $tables[$table] = array(
+            'schema' => TRUE,
+            'data' => TRUE,
+          );
         }
       }
     }
     else {
-      $tables[$table] = array('schema' => TRUE, 'data' => TRUE);
+      $tables[$table] = array(
+        'schema' => TRUE,
+        'data' => TRUE,
+      );
     }
   }
 
   // Apply default exclude list.
   $excludes = array(
-    // Drupal core.
+    // Backdrop core.
     '{cache}',
     '{cache_bootstrap}',
     '{cache_block}',
@@ -683,6 +716,21 @@ function demo_enum_tables() {
 }
 
 /**
+ * Retrieve a pipe delimited string of autocomplete suggestions for existing snapshots.
+ */
+function demo_autocomplete($string = '') {
+  $matches = array();
+  if ($string && $fileconfig = demo_get_fileconfig()) {
+    $string = preg_quote($string);
+    $files = file_scan_directory($fileconfig['dumppath'], '/' . $string . '.*\.info$/');
+    foreach ($files as $file) {
+      $matches[$file->name] = check_plain($file->name);
+    }
+  }
+  backdrop_json_output($matches);
+}
+
+/**
  * Transfer (download) a snapshot file.
  *
  * @param $filename
@@ -706,3 +754,4 @@ function demo_download($filename, $type) {
   );
   file_transfer($fileconfig[$type . 'file'], $headers);
 }
+

@@ -13,7 +13,6 @@ For a full description visit the project page:
 Bug reports, feature suggestions and latest developments:
   http://drupal.org/project/issues/demo
 
-Currently only MySQL and PostgreSQL are supported.SQLite isn't supported.
 
 -- INSTALLATION --
 
@@ -48,14 +47,9 @@ To configure automatic reset:
 
 -- CONTACT --
 
-Previous maintainers:
+Current maintainers:
 * Daniel F. Kudwien (sun) - dev@unleashedmind.com
 * Stefan M. Kudwien (smk-ka) - dev@unleashedmind.com
-
-Current maintainers:
-* David Suissa (DYdave)
-* Gaurav Kapoor (gaurav.kapoor)
-* Prafull Ranjan (prafullsranjan)
 
 This project has been sponsored by:
 * UNLEASHED MIND
@@ -63,8 +57,3 @@ This project has been sponsored by:
   MIND offers installation, development, theming, customization, and hosting
   to get you started. Visit http://www.unleashedmind.com for more information.
 
-* OpenSense Labs
-  OpenSense Labs is a global premium full-service Drupal agency. We specialize
-  in Drupal & Product engineering and focus on delivering experience platforms
-  to ensure client success and satisfaction across different industries. Visit
-  https://opensenselabs.com for more information.
