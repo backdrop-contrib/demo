@@ -1,5 +1,5 @@
-
--- SUMMARY --
+Demo
+====
 
 Demo Site is a simple module that allows you to take a snapshot of a Drupal
 demonstration site. It turns a Drupal installation into a sandbox that you can
@@ -8,20 +8,17 @@ use for testing modules or publicly demonstrating a module / extension / theme
 the dumped state in a definable interval. Of course you can reset the site
 manually, too.
 
-For a full description visit the project page:
-  http://drupal.org/project/demo
-Bug reports, feature suggestions and latest developments:
-  http://drupal.org/project/issues/demo
+Installation
+------------
 
+- Install this module using the official Backdrop CMS instructions at https://backdropcms.org/guide/modules.
 
--- INSTALLATION --
+- Visit the configuration page under Administration > Structure > Snapshots (admin/structure/demo) and enter the required information.
 
-* Copy the Demo module to your modules directory and enable it on the Modules
-  page (admin/structure/modules).
+- Any additional steps.
 
-* Optionally configure who is allowed to administer Demo module, create dumps
-  and reset the site on the Permissions page (admin/config/people/permissions).
-
+Documentation
+-------------
 
 -- CONFIGURATION --
 
@@ -44,16 +41,23 @@ To configure automatic reset:
 
 * After a while, reset your site (admin/structure/demo/reset).
 
+Issues
+------
 
--- CONTACT --
+Bugs and Feature requests should be reported in the Issue Queue: https://github.com/backdrop-contrib/demo/issues.
 
-Current maintainers:
-* Daniel F. Kudwien (sun) - dev@unleashedmind.com
-* Stefan M. Kudwien (smk-ka) - dev@unleashedmind.com
+Current Maintainers
+-------------------
 
-This project has been sponsored by:
-* UNLEASHED MIND
-  Specialized in consulting and planning of Drupal powered sites, UNLEASHED
-  MIND offers installation, development, theming, customization, and hosting
-  to get you started. Visit http://www.unleashedmind.com for more information.
+- Robert Garrigós (https://github.com/robertgarrigos).
 
+Credits
+-------
+
+- Ported to Backdrop CMS by Robert Garrigós (https://github.com/robertgarrigos).
+- Originally written for Drupal by Stefan M. Kudwien (smk-ka) - dev@unleashedmind.com and others.
+
+License
+-------
+
+This project is GPL v2 software. See the LICENSE.txt file in this directory for complete text.
