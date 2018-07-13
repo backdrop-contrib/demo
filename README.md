@@ -1,7 +1,7 @@
 Demo
 ====
 
-Demo Site is a simple module that allows you to take a snapshot of a Drupal
+Demo Site is a simple module that allows you to take a snapshot of a Backdrop
 demonstration site. It turns a Drupal installation into a sandbox that you can
 use for testing modules or publicly demonstrating a module / extension / theme
 (you name it). In short: With cron enabled, the Drupal site will be reset to
