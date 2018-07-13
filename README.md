@@ -15,8 +15,6 @@ Installation
 
 - Visit the configuration page under Administration > Structure > Snapshots (admin/structure/demo) and enter the required information.
 
-- Any additional steps.
-
 Documentation
 -------------
 
