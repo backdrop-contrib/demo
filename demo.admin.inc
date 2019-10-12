@@ -62,7 +62,7 @@ function demo_manage_form($form, &$form_state) {
   $form['status']['reset_last'] = array(
     '#type' => 'item',
     '#title' => t('Last reset'),
-    '#markup' => $reset_date ? format_date($reset_date) : t('Never'),
+    '#markup' => is_numeric($reset_date) ? format_date($reset_date) : t('Never'),
   );
 
   $form['dump'] = demo_get_dumps();
