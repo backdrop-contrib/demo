@@ -28,8 +28,8 @@ function demo_update_last_removed() {
 function demo_update_1000() {
   $config = config('demo.settings');
   $config->set('demo_dump_path', update_variable_get('demo_dump_path', 'demo'));
-  $config->set('demo_reset_last', update_variable_get('demo_reset_last', 'novalue'));
-  $config->set('demo_reset_interval', update_variable_get('demo_reset_interval', 'novalue'));
+  $config->set('demo_reset_last', update_variable_get('demo_reset_last', ''));
+  $config->set('demo_reset_interval', update_variable_get('demo_reset_interval', ''));
   $config->set('demo_dump_cron', update_variable_get('demo_dump_cron', 'demo_site'));
   update_variable_del('demo_dump_path');
   update_variable_del('demo_reset_last');
