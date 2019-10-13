@@ -1,7 +1,7 @@
 {
     "_config_name": "demo.settings",
     "demo_dump_path": "demo",
-    "demo_reset_last": "novalue",
-    "demo_reset_interval": "novalue",
+    "demo_reset_last": "",
+    "demo_reset_interval": "",
     "demo_dump_cron": "demo_site"
 }
