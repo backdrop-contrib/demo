@@ -9,6 +9,7 @@
  * Implements hook_uninstall().
  */
 function demo_reset_uninstall() {
+  config('demo_reset.settings')->delete();
 }
 
 
