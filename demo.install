@@ -9,7 +9,7 @@
  * Implements hook_uninstall().
  */
 function demo_uninstall() {
-  config_clear('demo.settings', 'demo_reset_last');
+  config('demo.settings')->delete();
 }
 
 // TODO The old hook_update_N functions cannot be applied to Backdrop.
