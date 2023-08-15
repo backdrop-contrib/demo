@@ -205,7 +205,7 @@ function _demo_dump_table_schema($fp, $table) {
 function _demo_dump_table_data($fp, $table) {
   $output = "\n";
   $output .= "--\n";
-  $output .= "-- Dumping data for table '$table'\n";
+  $output .= "-- Dumping data for table `'$table'`\n";
   $output .= "--\n\n";
 
   // Dump table data.
@@ -214,7 +214,7 @@ function _demo_dump_table_data($fp, $table) {
   // Get table fields.
   if ($fields = _demo_get_fields($result)) {
     // Disable indices to speed up import.
-    $output .= "/*!40000 ALTER TABLE $table DISABLE KEYS */;\n";
+    $output .= "/*!40000 ALTER TABLE `$table` DISABLE KEYS */;\n";
 
     // Escape backslashes, PHP code, special chars
     $search = array('\\', "'", "\x00", "\x0a", "\x0d", "\x1a");
@@ -287,7 +287,7 @@ function _demo_dump_table_data($fp, $table) {
     }
 
     // Enable indices again.
-    $output .= "/*!40000 ALTER TABLE $table ENABLE KEYS */;\n";
+    $output .= "/*!40000 ALTER TABLE `$table` ENABLE KEYS */;\n";
   }
 
   fwrite($fp, $output);
@@ -338,4 +338,3 @@ function _demo_table_is_view($table) {
   }
   return $tables[$table];
 }
-
