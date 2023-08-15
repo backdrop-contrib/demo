@@ -332,7 +332,7 @@ function _demo_reset($filename, $verbose = TRUE) {
   foreach (demo_enum_tables() as $table => $dump_options) {
     // Skip watchdog, except for legacy dumps that included the watchdog table
     if ($table != $watchdog || $is_version_1_0_dump) {
-      db_query("DROP TABLE $table");
+      db_query("DROP TABLE IF EXISTS `$table`");
     }
   }
 
@@ -754,4 +754,3 @@ function demo_download($filename, $type) {
   );
   file_transfer($fileconfig[$type . 'file'], $headers);
 }
-
