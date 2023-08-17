@@ -39,7 +39,8 @@ function demo_admin_settings($form, &$form_state) {
  * Form validation handler for demo_admin_settings().
  */
 function demo_admin_settings_validate($form, &$form_state) {
-  if (!file_prepare_directory($form_state['values']['demo_dump_path'], FILE_CREATE_DIRECTORY)) {
+  $path = 'private://' . $form_state['values']['demo_dump_path'];
+  if (!file_prepare_directory($path, FILE_CREATE_DIRECTORY)) {
     form_set_error('demo_dump_path', t('The snapshot directory %directory could not be created.', array('%directory' => $form_state['values']['demo_dump_path'])));
   }
 }
