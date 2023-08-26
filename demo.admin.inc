@@ -499,6 +499,7 @@ function demo_get_dumps() {
   $element = array(
     '#type' => 'radios',
     '#title' => t('Snapshot'),
+    '#description' => t('Click on file name for description and details.'),
     '#required' => TRUE,
     '#parents' => array('filename'),
     '#options' => array(),
