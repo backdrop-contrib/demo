@@ -493,7 +493,7 @@ function demo_get_dumps() {
   }
 
   // Sort snapshots by date (ascending file modification time).
-  uasort($files, create_function('$a, $b', 'return ($a->filemtime < $b->filemtime);'));
+  uasort($files, function($a, $b) {return ($a->filemtime < $b->filemtime);});
 
   $element = array(
     '#type' => 'radios',
