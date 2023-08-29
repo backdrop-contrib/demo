@@ -264,7 +264,7 @@ function demo_reset_confirm($form, &$form_state) {
   return confirm_form($form,
     t('Are you sure you want to reset the site?'),
     'admin/structure/demo',
-    t('Overwrites all changes that made to this site since the chosen snapshot.'),
+    t('Overwrites all changes made to this site since the chosen snapshot.'),
     t('Reset')
   );
 }
