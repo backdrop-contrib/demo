@@ -135,7 +135,7 @@ function demo_dump_form($form, &$form_state) {
     '#autocomplete_path' => 'demo/autocomplete',
     '#required' => TRUE,
     '#maxlength' => 128,
-    '#description' => t('Suggested names are existing snapshots. Use the same name of an existing snapshot to replace it, otherwise you will be creating a new one. Allowed characters: a-z, 0-9, dashes ("-"), underscores ("_") and dots.'),
+    '#description' => t('Use a new name to create a new snapshot or the name of an existing snapshot to replace it. Allowed characters: a-z, 0-9, dashes ("-"), underscores ("_") and dots.'),
   );
   $form['dump']['description'] = array(
     '#title' => t('Description'),
