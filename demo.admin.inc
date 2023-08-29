@@ -135,7 +135,7 @@ function demo_dump_form($form, &$form_state) {
     '#autocomplete_path' => 'demo/autocomplete',
     '#required' => TRUE,
     '#maxlength' => 128,
-    '#description' => t('Allowed characters: a-z, 0-9, dashes ("-"), underscores ("_") and dots.'),
+    '#description' => t('Use a new name to create a new snapshot or the name of an existing snapshot to replace it. Allowed characters: a-z, 0-9, dashes ("-"), underscores ("_") and dots.'),
   );
   $form['dump']['description'] = array(
     '#title' => t('Description'),
@@ -156,12 +156,13 @@ function demo_dump_form($form, &$form_state) {
     );
   }
   else {
+    $description = '<div class="messages warning">' . t('A snapshot with the same name already exists and will be replaced. This action cannot be undone.') . '</div>';
     $form = confirm_form($form,
       t('Are you sure you want to replace the existing %name snapshot?', array(
       '%name' => $form_state['values']['dump']['filename'],
     )),
       'admin/structure/demo',
-      t('A snapshot with the same name already exists and will be replaced. This action cannot be undone.')
+      $description
     );
   }
   return $form;
