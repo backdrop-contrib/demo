@@ -1,12 +1,12 @@
 Demo
 ====
 
-Demo Site is a simple module that allows you to take a snapshot of a Backdrop
-demonstration site. It turns a Drupal installation into a sandbox that you can
-use for testing modules or publicly demonstrating a module / extension / theme
-(you name it). In short: With cron enabled, the Drupal site will be reset to
-the dumped state in a definable interval. Of course you can reset the site
-manually, too.
+The Demo module has two main uses. It can be used to create and restore
+snapshots of a site with a simple click that can be useful when testing
+modules and during development. Also, with the included optional Demo
+Reset module it can be used to setup a public demonstration site, a
+sandbox for visitors to use, that is automatically reset periodically using
+cron.
 
 Installation
 ------------
