@@ -172,6 +172,9 @@ function demo_dump_form($form, &$form_state) {
  * Form validation handler for demo_dump_form().
  */
 function demo_dump_form_validate(&$form, &$form_state) {
+  if (!preg_match('/^[-_\.a-zA-Z0-9]+$/', $form_state['values']['dump']['filename'])) {
+    form_error($form['dump']['filename'], t('Invalid filename. It must only contain alphanumeric characters, dots, dashes and underscores. Other characters, including spaces, are not allowed.'));
+  }
   if (empty($form_state['values']['confirm'])) {
     $fileconfig = demo_get_fileconfig($form_state['values']['dump']['filename']);
     if (file_exists($fileconfig['infofile']) || file_exists($fileconfig['sqlfile'])) {
@@ -592,11 +595,6 @@ function demo_get_info($filename, $field = NULL) {
  */
 function demo_set_info($values = NULL) {
   if (isset($values['filename']) && is_array($values)) {
-    // Check for valid filename
-    if (!preg_match('/^[-_\.a-zA-Z0-9]+$/', $values['filename'])) {
-      backdrop_set_message(t('Invalid filename. It must only contain alphanumeric characters, dots, dashes and underscores. Other characters, including spaces, are not allowed.'), 'error');
-      return FALSE;
-    }
 
     if (!empty($values['description'])) {
       // parse_ini_file() doesn't allow certain characters in description
