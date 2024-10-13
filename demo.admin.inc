@@ -214,6 +214,7 @@ function _demo_dump($options) {
     return FALSE;
   }
 
+
   // Increase PHP's max_execution_time for large dumps.
   backdrop_set_time_limit(600);
 
@@ -226,6 +227,8 @@ function _demo_dump($options) {
   // Allow other modules to alter the dump options.
   $fileconfig = demo_get_fileconfig($info['filename']);
   backdrop_alter('demo_dump', $options, $info, $fileconfig);
+
+  watchdog('demo', 'Created snapshot for %filename.', array('%filename' => $info['filename']), WATCHDOG_NOTICE);
 
   // Perform database dump.
   if (!demo_dump_db($fileconfig['sqlfile'], $options)) {
