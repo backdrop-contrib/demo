@@ -230,6 +230,8 @@ function _demo_dump($options) {
   $fileconfig = demo_get_fileconfig($info['filename']);
   backdrop_alter('demo_dump', $options, $info, $fileconfig);
 
+  watchdog('demo', 'Created snapshot: %filename.', array('%filename' => $info['filename']), WATCHDOG_NOTICE);
+
   // Perform database dump.
   if (!demo_dump_db($fileconfig['sqlfile'], $options)) {
     return FALSE;
