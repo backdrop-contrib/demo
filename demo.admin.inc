@@ -282,9 +282,7 @@ function demo_reset_confirm_submit($form, &$form_state) {
   // Reset site to chosen snapshot.
   _demo_reset($form_state['values']['filename']);
 
-  // Do not redirect from the reset confirmation form by default, as it is
-  // likely that the user wants to reset all over again (e.g., keeping the
-  // browser tab open).
+  backdrop_goto('admin/structure/demo');
 }
 
 /**
@@ -379,19 +377,6 @@ function _demo_reset($filename, $verbose = TRUE) {
   catch (\ConfigStorageException $e) {
     form_set_error('import_tarball', t('Could not extract the contents of the tar file. The error message is "@message".', array('@message' => $e->getMessage())));
   }
-/*
-  // Retain variables.
-  foreach ($variables as $key => $value) {
-    if (isset($value)) {
-      // TODO This variable was probably removed in Backdrop without replacement.
-      variable_set($key, $value);
-    }
-    else {
-      // TODO This variable was probably removed in Backdrop without replacement.
-      variable_del($key);
-    }
-  }
-*/
   if ($success) {
     if ($verbose) {
       backdrop_set_message(t('Restored site from %filename.', array('%filename' => $fileconfig['sqlfile'])));
