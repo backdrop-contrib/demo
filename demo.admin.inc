@@ -63,7 +63,7 @@ function demo_manage_form($form, &$form_state) {
   $form['status']['reset_last'] = array(
     '#type' => 'item',
     '#title' => t('Last reset'),
-    '#markup' => $reset_date ? format_date($reset_date) : t('Never'),
+    '#markup' => $reset_date ? "<strong>" . config_get('demo.settings', 'demo_actual_config') . "</strong> " . format_date($reset_date) : t('Never'),
   );
 
   $form['dump'] = demo_get_dumps();
@@ -382,6 +382,8 @@ function _demo_reset($filename, $verbose = TRUE) {
       backdrop_set_message(t('Restored site from %filename.', array('%filename' => $fileconfig['sqlfile'])));
     }
     watchdog('demo', 'Restored site from %filename.', array('%filename' => $fileconfig['sqlfile']), WATCHDOG_NOTICE);
+
+    config_set('demo.settings', 'demo_actual_config', $filename);
 
     // Allow other modules to act on successful resets.
     module_invoke_all('demo_reset', $filename, $info, $fileconfig);

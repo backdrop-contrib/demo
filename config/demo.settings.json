@@ -3,5 +3,6 @@
     "demo_dump_path": "demo",
     "demo_reset_last": "",
     "demo_reset_interval": "",
-    "demo_dump_cron": "demo_site"
+    "demo_dump_cron": "demo_site",
+    "demo_actual_config": ""
 }
