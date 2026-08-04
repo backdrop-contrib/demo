@@ -13,13 +13,6 @@ function demo_uninstall() {
 }
 
 /**
- * Implements hook_update_last_removed().
- */
-function demo_update_last_removed() {
-  return 6100;
-}
-
-/**
  * Implements hook_update_N().
  */
 function demo_update_1000() {
