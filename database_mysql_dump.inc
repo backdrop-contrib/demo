@@ -30,7 +30,7 @@ function demo_dump_db($filename, $options = array()) {
     $header[] = '-- Date: ' . format_date(REQUEST_TIME, 'small');
     $header[] = '-- Server version: ' . db_query('SELECT version()')->fetchField();
     $header[] = '-- PHP version: ' . PHP_VERSION;
-    $header[] = '-- Backdrop version: ' . VERSION;
+    $header[] = '-- Backdrop version: ' . BACKDROP_VERSION;
 
     // Avoid auto value for zero values (required for user id 0).
     $header[] = '';
